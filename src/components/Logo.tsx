@@ -16,19 +16,8 @@ export default function Logo({ size = 40, className = '', glow = false }: LogoPr
         src="/logo.png"
         alt="Luna Bank"
         className="w-full h-full object-contain rounded-xl"
-        style={{ filter: 'drop-shadow(0 0 8px rgba(255,200,0,0.3))' }}
+        style={{ filter: 'drop-shadow(0 0 8px rgba(255, 200, 0, 0.3))' }}
       />
-    </div>
-  );
-}
-
-export function LogoText({ size = 40, showText = true }: { size?: number; showText?: boolean }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <Logo size={size} />
-      {showText && (
-        <span className="font-black text-lg tracking-tight">Luna Bank</span>
-      )}
     </div>
   );
 }

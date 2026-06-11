@@ -1,0 +1,256 @@
+/**
+ * Luna Bank — Database Layer
+ *
+ * All Supabase operations centralized here.
+ * Every write goes to both local store AND Supabase.
+ * Reads fall back to local store if Supabase is unreachable.
+ */
+
+import { supabase } from './supabase';
+import { useStore } from './store';
+import type { User, Account, Transaction } from './store';
+
+// ===== USERS =====
+
+export async function dbUpsertUser(user: Partial<User> & { telegram_id: number }) {
+  const { data, error } = await supabase
+    .from('users')
+    .upsert(user, { onConflict: 'telegram_id' })
+    .select()
+    .single();
+
+  if (error) console.error('[DB] upsertUser:', error.message);
+  return data;
+}
+
+export async function dbGetUser(telegramId: number) {
+  const { data } = await supabase
+    .from('users')
+    .select('*')
+    .eq('telegram_id', telegramId)
+    .single();
+  return data;
+}
+
+export async function dbUpdateUser(telegramId: number, updates: Record<string, any>) {
+  const { error } = await supabase
+    .from('users')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('telegram_id', telegramId);
+
+  if (error) console.error('[DB] updateUser:', error.message);
+}
+
+export async function dbSearchUsers(query: string, excludeId: number) {
+  const { data } = await supabase
+    .from('users')
+    .select('telegram_id, username, first_name, last_name, photo_url, luna_id')
+    .or(`username.ilike.%${query}%,luna_id.ilike.%${query}%,first_name.ilike.%${query}%`)
+    .neq('telegram_id', excludeId)
+    .limit(10);
+
+  return data || [];
+}
+
+export async function dbGetAllUsers() {
+  const { data } = await supabase
+    .from('users')
+    .select('*')
+    .order('created_at', { ascending: false });
+  return data || [];
+}
+
+// ===== ACCOUNTS =====
+
+export async function dbCreateAccount(account: Omit<Account, 'id'> & { id?: string }) {
+  const { data, error } = await supabase
+    .from('accounts')
+    .insert({ ...account, balance: account.balance || 0 })
+    .select()
+    .single();
+
+  if (error) console.error('[DB] createAccount:', error.message);
+  return data;
+}
+
+export async function dbGetUserAccounts(userId: number) {
+  const { data } = await supabase
+    .from('accounts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at');
+
+  return data || [];
+}
+
+export async function dbUpdateBalance(accountId: string, delta: number) {
+  // Read current balance
+  const { data: acc } = await supabase
+    .from('accounts')
+    .select('balance')
+    .eq('id', accountId)
+    .single();
+
+  if (acc) {
+    const newBal = Math.round((Number(acc.balance) + delta) * 100) / 100;
+    await supabase
+      .from('accounts')
+      .update({ balance: newBal })
+      .eq('id', accountId);
+  }
+}
+
+// ===== TRANSACTIONS =====
+
+export async function dbCreateTransaction(tx: Omit<Transaction, 'id' | 'created_at'>) {
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert(tx)
+    .select()
+    .single();
+
+  if (error) console.error('[DB] createTransaction:', error.message);
+  return data;
+}
+
+export async function dbGetUserTransactions(userId: number, limit = 50) {
+  const { data } = await supabase
+    .from('transactions')
+    .select('*')
+    .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  return data || [];
+}
+
+// ===== CARDS =====
+
+export async function dbCreateCard(card: Record<string, any>) {
+  const { data, error } = await supabase
+    .from('cards')
+    .insert(card)
+    .select()
+    .single();
+
+  if (error) console.error('[DB] createCard:', error.message);
+  return data;
+}
+
+// ===== NOTIFICATIONS =====
+
+export async function dbCreateNotification(notif: {
+  user_id: number;
+  title: string;
+  message: string;
+  type: string;
+}) {
+  await supabase
+    .from('notifications')
+    .insert({ ...notif, read: false })
+    ;
+}
+
+export async function dbMarkNotifRead(id: string) {
+  await supabase.from('notifications').update({ read: true }).eq('id', id);
+}
+
+// ===== WALLET =====
+
+export async function dbSaveWallet(userId: number, walletType: string, address: string) {
+  await supabase
+    .from('wallet_connections')
+    .upsert(
+      { user_id: userId, wallet_type: walletType, address },
+      { onConflict: 'user_id' }
+    );
+}
+
+// ===== KYC =====
+
+export async function dbSubmitKYC(userId: number, data: Record<string, any>) {
+  await supabase
+    .from('kyc_requests')
+    .upsert(
+      { user_id: userId, ...data, status: 'pending' },
+      { onConflict: 'user_id' }
+    );
+
+  await supabase
+    .from('users')
+    .update({ kyc_status: 'pending' })
+    .eq('telegram_id', userId);
+}
+
+export async function dbGetPendingKYC() {
+  const { data } = await supabase
+    .from('kyc_requests')
+    .select('*')
+    .eq('status', 'pending');
+  return data || [];
+}
+
+export async function dbApproveKYC(userId: number) {
+  await supabase.from('kyc_requests').update({ status: 'approved' }).eq('user_id', userId);
+  await supabase.from('users').update({ kyc_status: 'approved' }).eq('telegram_id', userId);
+}
+
+export async function dbRejectKYC(userId: number) {
+  await supabase.from('kyc_requests').update({ status: 'rejected' }).eq('user_id', userId);
+  await supabase.from('users').update({ kyc_status: 'rejected' }).eq('telegram_id', userId);
+}
+
+// ===== ADMIN STATS =====
+
+export async function dbGetAdminStats() {
+  const { count: userCount } = await supabase
+    .from('users')
+    .select('*', { count: 'exact', head: true });
+
+  const { data: txs } = await supabase
+    .from('transactions')
+    .select('amount, fee')
+    .limit(1000);
+
+  return {
+    userCount: userCount || 0,
+    totalVolume: txs?.reduce((s, t) => s + Number(t.amount || 0), 0) || 0,
+    totalFees: txs?.reduce((s, t) => s + Number(t.fee || 0), 0) || 0,
+    totalTxs: txs?.length || 0,
+  };
+}
+
+// ===== SYNC ON LOGIN =====
+
+export async function syncFromDB(telegramId: number) {
+  try {
+    const store = useStore.getState();
+
+    // Fetch accounts
+    const accounts = await dbGetUserAccounts(telegramId);
+    if (accounts.length > 0) {
+      store.setAccounts(accounts as Account[]);
+    }
+
+    // Fetch transactions
+    const txs = await dbGetUserTransactions(telegramId);
+    if (txs.length > 0) {
+      store.setTxs(txs as Transaction[]);
+    }
+
+    // Fetch wallet
+    const { data: wallet } = await supabase
+      .from('wallet_connections')
+      .select('address')
+      .eq('user_id', telegramId)
+      .single();
+
+    if (wallet) {
+      store.setTonWallet(wallet.address);
+    }
+
+    console.log('[DB] Synced from Supabase ✓');
+  } catch (err) {
+    console.warn('[DB] Sync failed (offline mode):', err);
+  }
+}

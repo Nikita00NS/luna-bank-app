@@ -1,4 +1,4 @@
-# 🌙 Luna Bank
+# 🌙 Luna Bank v1.2
 
 **Crypto Financial Ecosystem** — Telegram Mini App
 

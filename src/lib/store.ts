@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// ===== Types =====
 export type AccountType = 'personal' | 'business' | 'ton' | 'usdt' | 'bitcoin' | 'ethereum';
 export type Currency = 'LNC' | 'TON' | 'USDT' | 'BTC' | 'ETH';
 export type KYCStatus = 'none' | 'pending' | 'approved' | 'rejected';
@@ -9,14 +10,16 @@ export type CardType = 'virtual' | 'premium' | 'plastic';
 export type CardDesign = 'classic' | 'white' | 'gradient' | 'night' | 'ocean' | 'metal';
 
 export type Page =
-  | 'splash' | 'onboarding' | 'welcome' | 'home' | 'cards'
-  | 'account-detail' | 'open-account' | 'transfer' | 'deposit'
-  | 'receive' | 'qr' | 'profile' | 'subscription' | 'kyc'
-  | 'settings' | 'notifications' | 'chat' | 'news' | 'city'
+  | 'splash' | 'onboarding' | 'welcome' | 'home'
+  | 'cards' | 'account-detail' | 'open-account'
+  | 'transfer' | 'deposit' | 'receive' | 'qr'
+  | 'profile' | 'subscription' | 'kyc' | 'settings'
+  | 'notifications' | 'chat' | 'news' | 'city'
   | 'faq' | 'admin' | 'ton-connect' | 'markets'
   | 'swap' | 'exchange' | 'earn'
   | 'games' | 'nft'
-  | 'social' | 'payments' | 'themes' | 'escrow';
+  | 'social' | 'payments' | 'themes' | 'escrow'
+  | 'job-game';
 
 export interface User {
   telegram_id: number;
@@ -49,7 +52,7 @@ export interface Account {
   created_at: string;
   wallet_address?: string;
   contract_signed?: boolean;
-  signature_data?: string; // base64 signature image
+  signature_data?: string;
 }
 
 export interface Card {
@@ -88,14 +91,6 @@ export interface Notification {
   created_at: string;
 }
 
-export interface OwnedBusiness {
-  id: string;
-  type: string;
-  name: string;
-  income: number;
-  last_collected?: string;
-}
-
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -103,17 +98,40 @@ export interface ChatMessage {
   timestamp: string;
 }
 
-// Helpers
-export const uid = () => Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
-export const genAccNum = () => Array.from({ length: 20 }, () => Math.floor(Math.random() * 10)).join('');
-export const genIBAN = () => 'LU' + Array.from({ length: 22 }, () => Math.floor(Math.random() * 10)).join('');
-export const genCardNum = () => Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => Math.floor(Math.random() * 10)).join('')).join(' ');
-export const genCVV = () => Array.from({ length: 3 }, () => Math.floor(Math.random() * 10)).join('');
-export const genExpiry = () => `${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}/28`;
-export const genLunaId = () => 'LN' + Array.from({ length: 8 }, () => Math.floor(Math.random() * 10)).join('');
+export interface OwnedBusiness {
+  id: string;
+  type: string;
+  name: string;
+  income: number;
+}
 
+// ===== Helpers =====
+export const uid = () =>
+  Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+
+export const genAccNum = () =>
+  Array.from({ length: 20 }, () => Math.floor(Math.random() * 10)).join('');
+
+export const genIBAN = () =>
+  'LU' + Array.from({ length: 22 }, () => Math.floor(Math.random() * 10)).join('');
+
+export const genCardNum = () =>
+  Array.from({ length: 4 }, () =>
+    Array.from({ length: 4 }, () => Math.floor(Math.random() * 10)).join('')
+  ).join(' ');
+
+export const genCVV = () =>
+  Array.from({ length: 3 }, () => Math.floor(Math.random() * 10)).join('');
+
+export const genExpiry = () =>
+  `${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}/28`;
+
+export const genLunaId = () =>
+  'LN' + Array.from({ length: 8 }, () => Math.floor(Math.random() * 10)).join('');
+
+// ===== Store Interface =====
 interface AppState {
-  // Nav
+  // Navigation
   page: Page;
   prevPage: Page | null;
   tab: number;
@@ -134,9 +152,9 @@ interface AppState {
   accounts: Account[];
   selAccountId: string | null;
   addAccount: (a: Account) => void;
+  setAccounts: (accs: Account[]) => void;
   updateBalance: (id: string, delta: number) => void;
   selAccount: (id: string | null) => void;
-  patchAccount: (id: string, p: Partial<Account>) => void;
 
   // Cards
   cards: Card[];
@@ -145,6 +163,7 @@ interface AppState {
   // Transactions
   txs: Transaction[];
   addTx: (t: Transaction) => void;
+  setTxs: (txs: Transaction[]) => void;
 
   // Notifications
   notifs: Notification[];
@@ -168,75 +187,110 @@ interface AppState {
   addAiMsg: (m: ChatMessage) => void;
   addSupportMsg: (m: ChatMessage) => void;
 
-  // Currency display
+  // Display
   dispCurrency: string;
   setDispCurrency: (c: string) => void;
 
-  // Logout
+  // Auth
   logout: () => void;
 }
 
+// ===== Store =====
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
-      page: 'splash', prevPage: null, tab: 0,
-      go: (p) => set(s => ({ page: p, prevPage: s.page })),
-      back: () => set(s => ({ page: s.prevPage || 'home', prevPage: null })),
+      // Navigation
+      page: 'splash',
+      prevPage: null,
+      tab: 0,
+      go: (p) => set((s) => ({ page: p, prevPage: s.page })),
+      back: () => set((s) => ({ page: s.prevPage || 'home', prevPage: null })),
       setTab: (t) => {
         const pages: Page[] = ['home', 'cards', 'city', 'news', 'chat'];
         set({ tab: t, page: pages[t], prevPage: null });
       },
 
-      authed: false, isNew: true, user: null,
+      // Auth
+      authed: false,
+      isNew: true,
+      user: null,
       setUser: (u) => set({ user: u }),
       setAuthed: (v) => set({ authed: v }),
       setIsNew: (v) => set({ isNew: v }),
-      patchUser: (p) => set(s => ({ user: s.user ? { ...s.user, ...p } : null })),
-
-      accounts: [], selAccountId: null,
-      addAccount: (a) => set(s => ({ accounts: [...s.accounts, a] })),
-      updateBalance: (id, delta) => set(s => ({
-        accounts: s.accounts.map(a => a.id === id ? { ...a, balance: Math.round((a.balance + delta) * 100) / 100 } : a),
+      patchUser: (p) => set((s) => ({
+        user: s.user ? { ...s.user, ...p } : null,
       })),
+
+      // Accounts
+      accounts: [],
+      selAccountId: null,
+      addAccount: (a) => set((s) => ({ accounts: [...s.accounts, a] })),
+      setAccounts: (accs) => set({ accounts: accs }),
+      updateBalance: (id, delta) =>
+        set((s) => ({
+          accounts: s.accounts.map((a) =>
+            a.id === id
+              ? { ...a, balance: Math.round((a.balance + delta) * 100) / 100 }
+              : a
+          ),
+        })),
       selAccount: (id) => set({ selAccountId: id }),
-      patchAccount: (id, p) => set(s => ({
-        accounts: s.accounts.map(a => a.id === id ? { ...a, ...p } : a),
-      })),
 
+      // Cards
       cards: [],
-      addCard: (c) => set(s => ({ cards: [...s.cards, c] })),
+      addCard: (c) => set((s) => ({ cards: [...s.cards, c] })),
 
+      // Transactions
       txs: [],
-      addTx: (t) => set(s => ({ txs: [t, ...s.txs] })),
+      addTx: (t) => set((s) => ({ txs: [t, ...s.txs] })),
+      setTxs: (txs) => set({ txs }),
 
+      // Notifications
       notifs: [],
-      addNotif: (n) => set(s => ({ notifs: [n, ...s.notifs] })),
-      readNotif: (id) => set(s => ({ notifs: s.notifs.map(n => n.id === id ? { ...n, read: true } : n) })),
-      unreadCount: () => get().notifs.filter(n => !n.read).length,
+      addNotif: (n) => set((s) => ({ notifs: [n, ...s.notifs] })),
+      readNotif: (id) =>
+        set((s) => ({
+          notifs: s.notifs.map((n) => (n.id === id ? { ...n, read: true } : n)),
+        })),
+      unreadCount: () => get().notifs.filter((n) => !n.read).length,
 
+      // TON
       tonWallet: null,
       setTonWallet: (a) => set({ tonWallet: a }),
 
-      businesses: [], jobCooldowns: {},
-      addBiz: (b) => set(s => ({ businesses: [...s.businesses, b] })),
-      setJobCD: (jobId, until) => set(s => ({ jobCooldowns: { ...s.jobCooldowns, [jobId]: until } })),
+      // City
+      businesses: [],
+      jobCooldowns: {},
+      addBiz: (b) => set((s) => ({ businesses: [...s.businesses, b] })),
+      setJobCD: (jobId, until) =>
+        set((s) => ({ jobCooldowns: { ...s.jobCooldowns, [jobId]: until } })),
 
-      aiMsgs: [], supportMsgs: [],
-      addAiMsg: (m) => set(s => ({ aiMsgs: [...s.aiMsgs, m] })),
-      addSupportMsg: (m) => set(s => ({ supportMsgs: [...s.supportMsgs, m] })),
+      // Chat
+      aiMsgs: [],
+      supportMsgs: [],
+      addAiMsg: (m) => set((s) => ({ aiMsgs: [...s.aiMsgs, m] })),
+      addSupportMsg: (m) => set((s) => ({ supportMsgs: [...s.supportMsgs, m] })),
 
+      // Display
       dispCurrency: 'USD',
       setDispCurrency: (c) => set({ dispCurrency: c }),
 
+      // Logout
       logout: () => set({ authed: false, page: 'welcome' }),
     }),
     {
-      name: 'luna-bank-v2',
+      name: 'luna-bank-v3',
       partialize: (s) => ({
-        user: s.user, isNew: s.isNew, accounts: s.accounts, cards: s.cards,
-        txs: s.txs, notifs: s.notifs, tonWallet: s.tonWallet,
-        businesses: s.businesses, jobCooldowns: s.jobCooldowns,
-        aiMsgs: s.aiMsgs, supportMsgs: s.supportMsgs, dispCurrency: s.dispCurrency,
+        user: s.user,
+        isNew: s.isNew,
+        accounts: s.accounts,
+        cards: s.cards,
+        txs: s.txs,
+        notifs: s.notifs,
+        tonWallet: s.tonWallet,
+        businesses: s.businesses,
+        jobCooldowns: s.jobCooldowns,
+        dispCurrency: s.dispCurrency,
       }),
     }
   )

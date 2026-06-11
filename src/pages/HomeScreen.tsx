@@ -2,113 +2,299 @@ import React from 'react';
 import { useStore } from '../lib/store';
 import { formatMoney, balanceInUsd, haptic, getGreeting } from '../lib/utils';
 import { CURRENCIES, LNC_RATE_USD } from '../lib/constants';
+import Logo from '../components/Logo';
+import {
+  SendIcon, DownloadIcon, SwapIcon, DiamondIcon,
+  ChartIcon, GamepadIcon, ImageIcon, ShieldIcon,
+  ReceiptIcon, UsersIcon, TrendingUpIcon, LinkIcon,
+  BellIcon, PlusIcon,
+} from '../components/Icons';
+
+// Account type icons
+const ACCOUNT_ICONS: Record<string, string> = {
+  personal: '👤',
+  business: '💼',
+  ton: '💎',
+  usdt: '💵',
+  bitcoin: '₿',
+  ethereum: 'Ξ',
+};
 
 export default function HomeScreen() {
-  const { user, accounts, go, notifs, dispCurrency, setDispCurrency, txs } = useStore();
-  const g = getGreeting();
-  const unread = notifs.filter(n => !n.read).length;
+  const {
+    user,
+    accounts,
+    go,
+    notifs,
+    txs,
+    dispCurrency,
+    setDispCurrency,
+  } = useStore();
+
+  const greeting = getGreeting();
+  const unreadCount = notifs.filter((n) => !n.read).length;
+
   if (!user) return null;
 
-  const totalUsd = accounts.reduce((s, a) => s + balanceInUsd(a.balance, a.currency), 0);
-  const cKeys = Object.keys(CURRENCIES);
-  const cycleCur = () => { haptic('light'); setDispCurrency(cKeys[(cKeys.indexOf(dispCurrency) + 1) % cKeys.length]); };
+  // Calculate total balance in USD
+  const totalUsd = accounts.reduce(
+    (sum, acc) => sum + balanceInUsd(acc.balance, acc.currency),
+    0
+  );
 
-  const actions = [
-    { icon: '📤', label: 'Перевод', p: 'transfer' as const },
-    { icon: '📥', label: 'Пополнить', p: 'deposit' as const },
-    { icon: '💱', label: 'Обмен', p: 'swap' as const },
-    { icon: '💎', label: 'Earn', p: 'earn' as const },
+  // Currency cycling
+  const currencyKeys = Object.keys(CURRENCIES);
+  const cycleCurrency = () => {
+    haptic('light');
+    const idx = currencyKeys.indexOf(dispCurrency);
+    setDispCurrency(currencyKeys[(idx + 1) % currencyKeys.length]);
+  };
+
+  // Quick actions with SVG icons
+  const quickActions = [
+    { Icon: SendIcon, label: 'Перевод', page: 'transfer' as const },
+    { Icon: DownloadIcon, label: 'Пополнить', page: 'deposit' as const },
+    { Icon: SwapIcon, label: 'Обмен', page: 'swap' as const },
+    { Icon: DiamondIcon, label: 'Earn', page: 'earn' as const },
   ];
 
   return (
     <div className="h-full overflow-y-auto pb-24 safe-top">
-      <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+      {/* ===== Header ===== */}
+      <header className="px-5 pt-4 pb-2 flex items-center justify-between">
+        {/* Left: Avatar + Name */}
         <div className="flex items-center gap-3">
           <button onClick={() => { haptic('light'); go('profile'); }}>
-            {user.photo_url ? <img src={user.photo_url} className="w-11 h-11 rounded-full ring-1 ring-white/10" alt="" /> :
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-lg font-bold">{user.first_name[0]}</div>}
+            {user.photo_url ? (
+              <img
+                src={user.photo_url}
+                alt=""
+                className="w-11 h-11 rounded-full ring-1 ring-white/10"
+              />
+            ) : (
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-lg font-bold">
+                {user.first_name[0]}
+              </div>
+            )}
           </button>
           <div>
-            <p className="text-[11px] text-white/35 font-medium">{g.text} {g.emoji}</p>
-            <p className="font-bold text-[15px] -mt-0.5">{user.first_name} {user.last_name}</p>
+            <p className="text-[11px] text-white/35 font-medium">
+              {greeting.text} {greeting.emoji}
+            </p>
+            <p className="font-bold text-[15px] -mt-0.5">
+              {user.first_name} {user.last_name}
+            </p>
           </div>
         </div>
+
+        {/* Right: Currency + Notifications */}
         <div className="flex items-center gap-2">
-          <button onClick={cycleCur} className="glass rounded-full px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-transform">
+          <button
+            onClick={cycleCurrency}
+            className="glass rounded-full px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-transform"
+          >
             {CURRENCIES[dispCurrency]?.flag} {dispCurrency}
           </button>
-          <button onClick={() => { haptic('light'); go('notifications'); }} className="relative glass rounded-full w-10 h-10 flex items-center justify-center active:scale-95 transition-transform">
+          <button
+            onClick={() => { haptic('light'); go('notifications'); }}
+            className="relative glass rounded-full w-10 h-10 flex items-center justify-center active:scale-95 transition-transform"
+          >
             🔔
-            {unread > 0 && <div className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-[9px] font-bold ring-2 ring-black">{unread}</div>}
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-[9px] font-bold ring-2 ring-black">
+                {unreadCount}
+              </span>
+            )}
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="mx-5 mt-5 glass-accent rounded-3xl p-6 animate-slide-up">
-        <p className="text-xs text-white/40 font-medium tracking-wide uppercase mb-1">Общий баланс</p>
-        <p className="text-[42px] font-extrabold tabular-nums tracking-tighter leading-none">{formatMoney(totalUsd, dispCurrency)}</p>
-        <p className="text-sm text-white/30 mt-2">{accounts.length} {accounts.length === 1 ? 'счёт' : accounts.length < 5 ? 'счёта' : 'счетов'} · 1 LNC = ${LNC_RATE_USD}</p>
+      {/* ===== Balance Card ===== */}
+      <section className="mx-5 mt-5 glass-accent p-6 animate-slide-up">
+        <p className="text-xs text-white/40 font-medium tracking-widest uppercase mb-1">
+          Общий баланс
+        </p>
+        <p className="text-[42px] font-extrabold mono tracking-tighter leading-none">
+          {formatMoney(totalUsd, dispCurrency)}
+        </p>
+        <p className="text-sm text-white/30 mt-2">
+          {accounts.length}{' '}
+          {accounts.length === 1 ? 'счёт' : accounts.length < 5 ? 'счёта' : 'счетов'}
+          {' · '}1 LNC = ${LNC_RATE_USD}
+        </p>
+
+        {/* Quick Actions */}
         <div className="flex justify-between mt-6 gap-2">
-          {actions.map(a => (
-            <button key={a.label} onClick={() => { haptic('light'); go(a.p); }}
-              className="flex flex-col items-center gap-2 flex-1 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 transition-all duration-200">
-              <span className="text-[22px]">{a.icon}</span>
-              <span className="text-[11px] text-white/50 font-medium">{a.label}</span>
+          {quickActions.map((action) => (
+            <button
+              key={action.label}
+              onClick={() => { haptic('light'); go(action.page); }}
+              className="
+                flex flex-col items-center gap-2 flex-1
+                py-3 rounded-2xl bg-white/[0.04]
+                hover:bg-white/[0.08]
+                active:scale-95 transition-all duration-200
+              "
+            >
+              <action.Icon size={22} color="rgba(255,255,255,0.7)" />
+              <span className="text-[11px] text-white/50 font-medium">
+                {action.label}
+              </span>
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className="px-5 mt-7">
+      {/* ===== Accounts ===== */}
+      <section className="px-5 mt-7">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-[15px]">Мои счета</h3>
-          <button onClick={() => { haptic('light'); go('open-account'); }} className="text-xs text-white/30 font-medium">+ Открыть</button>
+          <button
+            onClick={() => { haptic('light'); go('open-account'); }}
+            className="text-xs text-white/30 font-medium"
+          >
+            + Открыть
+          </button>
         </div>
+
         {accounts.length === 0 ? (
-          <button onClick={() => { haptic('medium'); go('open-account'); }} className="w-full glass rounded-2xl p-8 flex flex-col items-center gap-3 animate-fade-in active:scale-[0.98] transition-transform">
-            <div className="w-14 h-14 rounded-2xl bg-white/[0.04] flex items-center justify-center text-2xl">+</div>
+          /* Empty state */
+          <button
+            onClick={() => { haptic('medium'); go('open-account'); }}
+            className="
+              w-full glass p-8
+              flex flex-col items-center gap-3
+              animate-fade-in
+              active:scale-[0.98] transition-transform
+            "
+          >
+            <div className="w-14 h-14 rounded-2xl bg-white/[0.04] flex items-center justify-center text-2xl">
+              +
+            </div>
             <p className="text-sm text-white/40">Откройте свой первый счёт</p>
           </button>
         ) : (
+          /* Account list */
           <div className="space-y-2.5">
-            {accounts.map((a, i) => (
-              <button key={a.id} onClick={() => { haptic('light'); useStore.getState().selAccount(a.id); go('account-detail'); }}
-                className="w-full glass rounded-2xl p-4 flex items-center gap-4 animate-slide-up active:scale-[0.98] transition-all duration-200"
-                style={{animationDelay:`${i*0.06}s`}}>
+            {accounts.map((account, index) => (
+              <button
+                key={account.id}
+                onClick={() => {
+                  haptic('light');
+                  useStore.getState().selAccount(account.id);
+                  go('account-detail');
+                }}
+                className="
+                  w-full glass p-4
+                  flex items-center gap-4
+                  animate-slide-up
+                  active:scale-[0.98] transition-all duration-200
+                "
+                style={{ animationDelay: `${index * 0.06}s` }}
+              >
+                {/* Icon */}
                 <div className="w-11 h-11 rounded-xl bg-white/[0.04] flex items-center justify-center text-xl">
-                  {a.type==='personal'?'👤':a.type==='business'?'💼':a.type==='ton'?'💎':a.type==='usdt'?'💵':a.type==='bitcoin'?'₿':'Ξ'}
+                  {ACCOUNT_ICONS[account.type] || '💰'}
                 </div>
+
+                {/* Name + Currency */}
                 <div className="flex-1 text-left">
-                  <p className="font-semibold text-[14px]">{a.name}</p>
-                  <p className="text-[11px] text-white/30">{a.currency}</p>
+                  <p className="font-semibold text-[14px]">{account.name}</p>
+                  <p className="text-[11px] text-white/30">{account.currency}</p>
                 </div>
-                <p className="font-bold tabular-nums text-[14px]">{formatMoney(balanceInUsd(a.balance, a.currency), dispCurrency)}</p>
+
+                {/* Balance */}
+                <p className="font-bold mono text-[14px]">
+                  {formatMoney(
+                    balanceInUsd(account.balance, account.currency),
+                    dispCurrency
+                  )}
+                </p>
               </button>
             ))}
           </div>
         )}
-      </div>
+      </section>
 
+      {/* ===== More Actions ===== */}
+      <section className="px-5 mt-7">
+        <h3 className="font-bold text-[15px] mb-3">Сервисы</h3>
+        <div className="grid grid-cols-4 gap-2">
+          {([
+            { Icon: ChartIcon, label: 'Биржа', page: 'exchange' as const },
+            { Icon: GamepadIcon, label: 'Игры', page: 'games' as const },
+            { Icon: ImageIcon, label: 'NFT', page: 'nft' as const },
+            { Icon: ShieldIcon, label: 'Гарант', page: 'escrow' as const },
+            { Icon: ReceiptIcon, label: 'Платежи', page: 'payments' as const },
+            { Icon: UsersIcon, label: 'Друзья', page: 'social' as const },
+            { Icon: TrendingUpIcon, label: 'Курсы', page: 'markets' as const },
+            { Icon: LinkIcon, label: 'TON', page: 'ton-connect' as const },
+          ]).map((item, i) => (
+            <button
+              key={item.label}
+              onClick={() => { haptic('light'); go(item.page); }}
+              className="
+                glass p-3
+                flex flex-col items-center gap-1.5
+                active:scale-95 transition-all
+                animate-scale-in
+              "
+              style={{ animationDelay: `${i * 0.04}s` }}
+            >
+              <item.Icon size={20} color="rgba(255,255,255,0.5)" />
+              <span className="text-[10px] text-white/40 font-medium">
+                {item.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ===== Recent Transactions ===== */}
       {txs.length > 0 && (
-        <div className="px-5 mt-7 mb-4">
+        <section className="px-5 mt-7 mb-4">
           <h3 className="font-bold text-[15px] mb-3">Последние операции</h3>
           <div className="space-y-2">
-            {txs.slice(0, 5).map(tx => (
-              <div key={tx.id} className="glass rounded-xl p-3 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-white/[0.04] flex items-center justify-center text-lg">
-                  {tx.type==='transfer'?'📤':tx.type==='deposit'?'📥':tx.type==='subscription'?'⭐':tx.type==='job'?'💼':tx.type==='business'?'🏪':'💳'}
+            {txs.slice(0, 5).map((tx) => {
+              const isOutgoing = tx.from_user_id === user.telegram_id;
+              return (
+                <div key={tx.id} className="glass p-3 flex items-center gap-3">
+                  {/* Icon */}
+                  <div className="w-9 h-9 rounded-lg bg-white/[0.04] flex items-center justify-center text-lg">
+                    {tx.type === 'transfer' ? '📤' :
+                     tx.type === 'deposit' ? '📥' :
+                     tx.type === 'subscription' ? '⭐' :
+                     tx.type === 'job' ? '💼' :
+                     tx.type === 'business' ? '🏪' : '💳'}
+                  </div>
+
+                  {/* Details */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {tx.note || tx.type}
+                    </p>
+                    <p className="text-[11px] text-white/30">
+                      {new Date(tx.created_at).toLocaleDateString('ru-RU')}
+                    </p>
+                  </div>
+
+                  {/* Amount */}
+                  <p
+                    className={`font-bold mono text-sm ${
+                      isOutgoing ? 'text-red-400' : 'text-emerald-400'
+                    }`}
+                  >
+                    {isOutgoing ? '-' : '+'}
+                    {formatMoney(
+                      balanceInUsd(tx.amount, tx.currency),
+                      'USD'
+                    )}
+                  </p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{tx.type==='transfer'?'Перевод':tx.type==='deposit'?'Пополнение':tx.type==='subscription'?'Подписка':tx.type==='job'?'Зарплата':tx.type==='business'?'Доход':'Карта'}</p>
-                  <p className="text-[11px] text-white/30">{new Date(tx.created_at).toLocaleDateString('ru-RU')}</p>
-                </div>
-                <p className={`font-bold tabular-nums text-sm ${tx.from_user_id===user.telegram_id?'text-red-400':'text-emerald-400'}`}>
-                  {tx.from_user_id===user.telegram_id?'-':'+'}{formatMoney(balanceInUsd(tx.amount, tx.currency), 'USD')}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
