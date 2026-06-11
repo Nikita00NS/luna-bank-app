@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.cache/
+.vite/
+*.local
+.DS_Store
+.env
+.env.local
+.env.production
