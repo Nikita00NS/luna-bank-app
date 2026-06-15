@@ -295,7 +295,7 @@ export const useStore = create<AppState>()(
       logout: () => set({ authed: false, page: 'welcome' }),
     }),
     {
-      name: 'luna-bank-v3',
+      name: 'luna-bank-v1.3-clean',
       partialize: (s) => ({
         user: s.user,
         isNew: s.isNew,
