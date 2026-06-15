@@ -303,6 +303,118 @@ export async function dbRejectKYC(userId: number) {
   await supabase.from('users').update({ kyc_status: 'rejected' }).eq('telegram_id', userId);
 }
 
+// ===== P2P OFFERS =====
+
+export async function dbCreateP2POffer(offer: Record<string, any>) {
+  const { data, error } = await supabase.from('p2p_offers').insert(offer).select().single();
+  if (error) console.error('[DB] createP2POffer:', error.message);
+  return data;
+}
+
+export async function dbGetP2POffers(type: 'buy' | 'sell', excludeUserId: number) {
+  const { data } = await supabase
+    .from('p2p_offers')
+    .select('*')
+    .eq('status', 'active')
+    .eq('type', type)
+    .neq('user_id', excludeUserId)
+    .order('created_at', { ascending: false })
+    .limit(30);
+  return data || [];
+}
+
+export async function dbGetMyP2POffers(userId: number) {
+  const { data } = await supabase.from('p2p_offers').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+  return data || [];
+}
+
+export async function dbUpdateP2POffer(id: string, updates: Record<string, any>) {
+  await supabase.from('p2p_offers').update(updates).eq('id', id);
+}
+
+// ===== MARKETPLACE =====
+
+export async function dbCreateListing(listing: Record<string, any>) {
+  const { data, error } = await supabase.from('marketplace_listings').insert(listing).select().single();
+  if (error) console.error('[DB] createListing:', error.message);
+  return data;
+}
+
+export async function dbGetListings(category?: string) {
+  let q = supabase.from('marketplace_listings').select('*').eq('status', 'active').order('created_at', { ascending: false }).limit(50);
+  if (category && category !== 'all') q = q.eq('category', category);
+  const { data } = await q;
+  return data || [];
+}
+
+export async function dbUpdateListing(id: string, updates: Record<string, any>) {
+  await supabase.from('marketplace_listings').update(updates).eq('id', id);
+}
+
+// ===== SAVINGS GOALS =====
+
+export async function dbCreateGoal(goal: Record<string, any>) {
+  const { data, error } = await supabase.from('savings_goals').insert(goal).select().single();
+  if (error) console.error('[DB] createGoal:', error.message);
+  return data;
+}
+
+export async function dbGetGoals(userId: number) {
+  const { data } = await supabase.from('savings_goals').select('*').eq('user_id', userId).order('created_at');
+  return data || [];
+}
+
+export async function dbUpdateGoal(id: string, updates: Record<string, any>) {
+  await supabase.from('savings_goals').update(updates).eq('id', id);
+}
+
+export async function dbDeleteGoal(id: string) {
+  await supabase.from('savings_goals').delete().eq('id', id);
+}
+
+// ===== ESCROW DEALS =====
+
+export async function dbCreateEscrow(deal: Record<string, any>) {
+  const { data, error } = await supabase.from('escrow_deals').insert(deal).select().single();
+  if (error) console.error('[DB] createEscrow:', error.message);
+  return data;
+}
+
+export async function dbGetEscrowDeals(userId: number) {
+  const { data } = await supabase.from('escrow_deals').select('*').eq('buyer_id', userId).order('created_at', { ascending: false });
+  return data || [];
+}
+
+export async function dbUpdateEscrow(id: string, updates: Record<string, any>) {
+  await supabase.from('escrow_deals').update(updates).eq('id', id);
+}
+
+// ===== EARN DEPOSITS =====
+
+export async function dbCreateEarnDeposit(deposit: Record<string, any>) {
+  const { data, error } = await supabase.from('earn_deposits').insert(deposit).select().single();
+  if (error) console.error('[DB] createEarnDeposit:', error.message);
+  return data;
+}
+
+export async function dbGetEarnDeposits(userId: number) {
+  const { data } = await supabase.from('earn_deposits').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+  return data || [];
+}
+
+export async function dbUpdateEarnDeposit(id: string, updates: Record<string, any>) {
+  await supabase.from('earn_deposits').update(updates).eq('id', id);
+}
+
+// ===== NEWS =====
+
+export async function dbGetNews(category?: string) {
+  let q = supabase.from('news_articles').select('*').order('created_at', { ascending: false }).limit(20);
+  if (category && category !== 'all') q = q.eq('category', category);
+  const { data } = await q;
+  return data || [];
+}
+
 // ===== ADMIN STATS =====
 
 export async function dbGetAdminStats() {

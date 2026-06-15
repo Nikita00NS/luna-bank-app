@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStore, uid } from '../lib/store';
 import { haptic, timeAgo } from '../lib/utils';
-import { supabase } from '../lib/supabase';
-import { dbUpdateBalance, dbCreateTransaction } from '../lib/db';
+import { dbUpdateBalance, dbCreateTransaction, dbCreateP2POffer, dbGetP2POffers, dbGetMyP2POffers, dbUpdateP2POffer } from '../lib/db';
 import { ArrowLeftIcon, PlusIcon } from '../components/Icons';
 import AnimatedEmoji from '../components/AnimatedEmoji';
 import Modal from '../components/Modal';
@@ -49,24 +48,26 @@ export default function P2PScreen() {
 
   const loadOffers = async () => {
     setLoading(true);
-    // Load from localStorage (production: Supabase table)
     try {
-      const all: P2POffer[] = JSON.parse(localStorage.getItem('luna-p2p-offers') || '[]');
-      setOffers(all.filter((o) => o.status === 'active' && o.user_id !== user.telegram_id && o.type === (tab === 'buy' ? 'sell' : 'buy')));
-      setMyOffers(all.filter((o) => o.user_id === user.telegram_id));
+      const searchType = tab === 'buy' ? 'sell' : 'buy';
+      const [offerData, myData] = await Promise.all([
+        dbGetP2POffers(searchType as any, user.telegram_id),
+        dbGetMyP2POffers(user.telegram_id),
+      ]);
+      setOffers(offerData as P2POffer[]);
+      setMyOffers(myData as P2POffer[]);
     } catch {}
     setLoading(false);
   };
 
-  const createOffer = () => {
+  const createOffer = async () => {
     const amount = parseFloat(newAmount) || 0;
     const price = parseFloat(newPrice) || 0;
     if (amount <= 0 || price <= 0) { haptic('error'); return; }
     if (newType === 'sell' && lncAcc && lncAcc.balance < amount) { haptic('error'); return; }
 
     haptic('success');
-    const offer: P2POffer = {
-      id: uid(),
+    await dbCreateP2POffer({
       user_id: user.telegram_id,
       username: user.username,
       first_name: user.first_name,
@@ -78,12 +79,7 @@ export default function P2PScreen() {
       max_limit: amount * price,
       payment_methods: newMethods,
       status: 'active',
-      created_at: new Date().toISOString(),
-    };
-
-    const all: P2POffer[] = JSON.parse(localStorage.getItem('luna-p2p-offers') || '[]');
-    all.push(offer);
-    localStorage.setItem('luna-p2p-offers', JSON.stringify(all));
+    });
 
     // If selling, freeze balance
     if (newType === 'sell' && lncAcc) {
@@ -96,7 +92,7 @@ export default function P2PScreen() {
     loadOffers();
   };
 
-  const executeDeal = () => {
+  const executeDeal = async () => {
     if (!selectedOffer || !lncAcc) return;
     const amt = parseFloat(dealAmount) || 0;
     if (amt <= 0 || amt > selectedOffer.amount) { haptic('error'); return; }
@@ -126,10 +122,12 @@ export default function P2PScreen() {
 
     addNotif({ id: uid(), title: '🔄 P2P Сделка', message: `◎${amt} LNC по ₽${selectedOffer.price}/LNC`, type: 'transfer', read: false, created_at: new Date().toISOString() });
 
-    // Update offer
-    const all: P2POffer[] = JSON.parse(localStorage.getItem('luna-p2p-offers') || '[]');
-    const updated = all.map((o) => o.id === selectedOffer.id ? { ...o, amount: o.amount - amt, status: o.amount - amt <= 0 ? 'completed' as const : 'active' as const } : o);
-    localStorage.setItem('luna-p2p-offers', JSON.stringify(updated));
+    // Update offer in DB
+    const remaining = selectedOffer.amount - amt;
+    await dbUpdateP2POffer(selectedOffer.id, {
+      amount: remaining,
+      status: remaining <= 0 ? 'completed' : 'active',
+    });
 
     setShowDeal(false);
     setDealAmount('');

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore, uid } from '../lib/store';
-import { haptic, timeAgo } from '../lib/utils';
-import { dbUpdateBalance } from '../lib/db';
+import { haptic } from '../lib/utils';
+import { dbUpdateBalance, dbCreateListing, dbGetListings, dbUpdateListing, dbCreateTransaction } from '../lib/db';
+import { notifyCustom } from '../lib/bot';
 import { ArrowLeftIcon, PlusIcon } from '../components/Icons';
 import AnimatedEmoji from '../components/AnimatedEmoji';
 import Modal from '../components/Modal';
@@ -35,9 +36,17 @@ export default function MarketplaceScreen() {
   const [showCreate, setShowCreate] = useState(false);
   const [showBuy, setShowBuy] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Listing | null>(null);
-  const [listings, setListings] = useState<Listing[]>(() => {
-    try { return JSON.parse(localStorage.getItem('luna-marketplace') || '[]'); } catch { return []; }
-  });
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
+
+  useEffect(() => { loadListings(); }, [category]);
+
+  const loadListings = async () => {
+    setLoadingList(true);
+    const data = await dbGetListings(category);
+    setListings(data as Listing[]);
+    setLoadingList(false);
+  };
 
   // Create form
   const [newTitle, setNewTitle] = useState('');
@@ -49,20 +58,14 @@ export default function MarketplaceScreen() {
   if (!user) return null;
   const lncAcc = accounts.find((a) => a.currency === 'LNC');
 
-  const saveListings = (l: Listing[]) => {
-    setListings(l);
-    localStorage.setItem('luna-marketplace', JSON.stringify(l));
-  };
+  const filtered = listings;
 
-  const filtered = listings.filter((l) => l.status === 'active' && (category === 'all' || l.category === category));
-
-  const createListing = () => {
+  const handleCreateListing = async () => {
     const price = parseFloat(newPrice) || 0;
     if (!newTitle || price <= 0) { haptic('error'); return; }
     haptic('success');
 
-    const listing: Listing = {
-      id: uid(),
+    await dbCreateListing({
       seller_id: user.telegram_id,
       seller_name: user.first_name,
       seller_username: user.username,
@@ -72,15 +75,14 @@ export default function MarketplaceScreen() {
       category: newCategory,
       image_emoji: newEmoji,
       status: 'active',
-      created_at: new Date().toISOString(),
-    };
+    });
 
-    saveListings([listing, ...listings]);
     setShowCreate(false);
     setNewTitle(''); setNewDesc(''); setNewPrice('');
+    loadListings();
   };
 
-  const buyItem = () => {
+  const buyItem = async () => {
     if (!selectedItem || !lncAcc) return;
     if (lncAcc.balance < selectedItem.price) { haptic('error'); return; }
     if (selectedItem.seller_id === user.telegram_id) { haptic('error'); return; }
@@ -89,12 +91,16 @@ export default function MarketplaceScreen() {
     updateBalance(lncAcc.id, -selectedItem.price);
     dbUpdateBalance(lncAcc.id, -selectedItem.price).catch(() => {});
 
-    addTx({ id: uid(), from_user_id: user.telegram_id, to_user_id: selectedItem.seller_id, from_account_id: lncAcc.id, to_account_id: 'marketplace', amount: selectedItem.price, fee: 0, currency: 'LNC', type: 'transfer', status: 'completed', note: `Покупка: ${selectedItem.title}`, created_at: new Date().toISOString() });
+    const txData = { id: uid(), from_user_id: user.telegram_id, to_user_id: selectedItem.seller_id, from_account_id: lncAcc.id, to_account_id: 'marketplace', amount: selectedItem.price, fee: 0, currency: 'LNC' as const, type: 'transfer' as const, status: 'completed' as const, note: `Покупка: ${selectedItem.title}`, created_at: new Date().toISOString() };
+    addTx(txData);
+    dbCreateTransaction(txData).catch(() => {});
     addNotif({ id: uid(), title: '🛒 Покупка', message: `${selectedItem.title} — ◎${selectedItem.price}`, type: 'transfer', read: false, created_at: new Date().toISOString() });
 
-    const updated = listings.map((l) => l.id === selectedItem.id ? { ...l, status: 'sold' as const } : l);
-    saveListings(updated);
+    await dbUpdateListing(selectedItem.id, { status: 'sold', buyer_id: user.telegram_id });
+    notifyCustom(selectedItem.seller_id, `🛒 *Ваш товар куплен!*\n${selectedItem.title}: ◎${selectedItem.price} LNC`).catch(() => {});
+
     setShowBuy(false);
+    loadListings();
   };
 
   const EMOJIS = ['📦', '💻', '📱', '🎮', '📚', '🎨', '🎵', '📸', '🛠', '🎁', '👕', '🏠'];
@@ -168,7 +174,7 @@ export default function MarketplaceScreen() {
           <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-full glass px-4 py-3 bg-black text-white outline-none rounded-xl text-sm">
             {CATEGORIES.filter((c) => c.id !== 'all').map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
           </select>
-          <button onClick={createListing} disabled={!newTitle || !newPrice} className="btn-primary w-full">Опубликовать</button>
+          <button onClick={handleCreateListing} disabled={!newTitle || !newPrice} className="btn-primary w-full">Опубликовать</button>
         </div>
       </Modal>
 

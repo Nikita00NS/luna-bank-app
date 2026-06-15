@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore, uid } from '../lib/store';
 import { haptic, formatMoney, balanceInUsd } from '../lib/utils';
-import { dbUpdateBalance, dbCreateTransaction } from '../lib/db';
+import { dbUpdateBalance, dbCreateTransaction, dbCreateGoal, dbGetGoals, dbUpdateGoal, dbDeleteGoal } from '../lib/db';
 import { ArrowLeftIcon, PlusIcon } from '../components/Icons';
 import AnimatedEmoji from '../components/AnimatedEmoji';
 import Modal from '../components/Modal';
@@ -29,9 +29,19 @@ const GOAL_PRESETS = [
 
 export default function SavingsScreen() {
   const { user, accounts, go, updateBalance, addTx } = useStore();
-  const [goals, setGoals] = useState<SavingsGoal[]>(() => {
-    try { return JSON.parse(localStorage.getItem('luna-savings') || '[]'); } catch { return []; }
-  });
+  const [goals, setGoals] = useState<SavingsGoal[]>([]);
+  const [loadingGoals, setLoadingGoals] = useState(true);
+
+  const userId = user?.telegram_id;
+  useEffect(() => { if (userId) loadGoalsFromDB(); }, [userId]);
+
+  const loadGoalsFromDB = async () => {
+    if (!user) return;
+    setLoadingGoals(true);
+    const data = await dbGetGoals(user.telegram_id);
+    setGoals(data as SavingsGoal[]);
+    setLoadingGoals(false);
+  };
   const [showCreate, setShowCreate] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<SavingsGoal | null>(null);
@@ -43,22 +53,17 @@ export default function SavingsScreen() {
   if (!user) return null;
   const lncAcc = accounts.find((a) => a.currency === 'LNC');
 
-  const saveGoals = (g: SavingsGoal[]) => {
-    setGoals(g);
-    localStorage.setItem('luna-savings', JSON.stringify(g));
-  };
-
-  const createGoal = () => {
+  const createGoal = async () => {
     const target = parseFloat(newTarget) || 0;
     if (!newName || target <= 0) { haptic('error'); return; }
     haptic('success');
-    const goal: SavingsGoal = { id: uid(), name: newName, icon: newIcon, target, saved: 0, created_at: new Date().toISOString() };
-    saveGoals([...goals, goal]);
+    await dbCreateGoal({ user_id: user.telegram_id, name: newName, icon: newIcon, target, saved: 0 });
     setShowCreate(false);
     setNewName(''); setNewTarget('');
+    loadGoalsFromDB();
   };
 
-  const depositToGoal = () => {
+  const depositToGoal = async () => {
     if (!selectedGoal || !lncAcc) return;
     const amt = parseFloat(depositAmt) || 0;
     if (amt <= 0 || amt > lncAcc.balance) { haptic('error'); return; }
@@ -66,36 +71,33 @@ export default function SavingsScreen() {
 
     updateBalance(lncAcc.id, -amt);
     dbUpdateBalance(lncAcc.id, -amt).catch(() => {});
-
-    const updated = goals.map((g) =>
-      g.id === selectedGoal.id ? { ...g, saved: g.saved + amt } : g
-    );
-    saveGoals(updated);
+    await dbUpdateGoal(selectedGoal.id, { saved: Number(selectedGoal.saved) + amt });
 
     addTx({ id: uid(), from_user_id: user.telegram_id, to_user_id: user.telegram_id, from_account_id: lncAcc.id, to_account_id: `savings_${selectedGoal.id}`, amount: amt, fee: 0, currency: 'LNC', type: 'transfer', status: 'completed', note: `Копилка: ${selectedGoal.name}`, created_at: new Date().toISOString() });
 
     setShowDeposit(false);
     setDepositAmt('');
+    loadGoalsFromDB();
   };
 
-  const withdrawGoal = (goal: SavingsGoal) => {
-    if (!lncAcc || goal.saved <= 0) return;
+  const withdrawGoal = async (goal: SavingsGoal) => {
+    if (!lncAcc || Number(goal.saved) <= 0) return;
     haptic('success');
-    updateBalance(lncAcc.id, goal.saved);
-    dbUpdateBalance(lncAcc.id, goal.saved).catch(() => {});
-
-    const updated = goals.map((g) => g.id === goal.id ? { ...g, saved: 0 } : g);
-    saveGoals(updated);
+    updateBalance(lncAcc.id, Number(goal.saved));
+    dbUpdateBalance(lncAcc.id, Number(goal.saved)).catch(() => {});
+    await dbUpdateGoal(goal.id, { saved: 0 });
+    loadGoalsFromDB();
   };
 
-  const deleteGoal = (id: string) => {
+  const handleDeleteGoal = async (id: string) => {
     const goal = goals.find((g) => g.id === id);
-    if (goal && goal.saved > 0 && lncAcc) {
-      updateBalance(lncAcc.id, goal.saved);
-      dbUpdateBalance(lncAcc.id, goal.saved).catch(() => {});
+    if (goal && Number(goal.saved) > 0 && lncAcc) {
+      updateBalance(lncAcc.id, Number(goal.saved));
+      dbUpdateBalance(lncAcc.id, Number(goal.saved)).catch(() => {});
     }
-    saveGoals(goals.filter((g) => g.id !== id));
+    await dbDeleteGoal(id);
     haptic('medium');
+    loadGoalsFromDB();
   };
 
   return (
@@ -149,7 +151,7 @@ export default function SavingsScreen() {
                         📤 Забрать
                       </button>
                     )}
-                    <button onClick={() => deleteGoal(goal.id)}
+                    <button onClick={() => handleDeleteGoal(goal.id)}
                       className="glass py-2 px-3 rounded-xl text-xs text-red-400/60 active:scale-95">
                       🗑
                     </button>
