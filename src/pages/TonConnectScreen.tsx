@@ -14,7 +14,7 @@ import {
   type TonTransaction,
   type TonAccountInfo,
 } from '../lib/ton';
-import { dbSaveWallet, dbCreateAccount, dbCreateNotification } from '../lib/db';
+import { dbSaveWallet, dbCreateAccount, dbCreateNotification, dbUpdateBalance } from '../lib/db';
 import { useTonConnectUI, useTonWallet, useTonAddress } from '@tonconnect/ui-react';
 import { ArrowLeftIcon, LinkIcon, CheckIcon } from '../components/Icons';
 import AnimatedEmoji from '../components/AnimatedEmoji';
@@ -60,6 +60,17 @@ export default function TonConnectScreen() {
       ]);
       setTonBalance(bal);
       setAccountInfo(info);
+
+      // Sync real TON balance to account in store + Supabase
+      if (bal.ok) {
+        const store = useStore.getState();
+        const tonAcc = store.accounts.find((a) => a.currency === 'TON');
+        if (tonAcc && Math.abs(tonAcc.balance - bal.balance) > 0.0001) {
+          const delta = bal.balance - tonAcc.balance;
+          store.updateBalance(tonAcc.id, delta);
+          dbUpdateBalance(tonAcc.id, delta).catch(() => {});
+        }
+      }
     } catch {}
     setLoadingBalance(false);
   }, [address]);
@@ -119,7 +130,7 @@ export default function TonConnectScreen() {
               wallet_address: address,
             };
             addAccount(acc);
-            dbCreateAccount(acc).catch(() => {});
+            dbCreateAccount(acc).catch((err) => console.error('[TON] Account save failed:', acc.type, err));
           }
         }
 

@@ -108,8 +108,18 @@ export interface OwnedBusiness {
 }
 
 // ===== Helpers =====
-export const uid = () =>
-  Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+export const uid = (): string => {
+  // Generate proper UUID v4 (compatible with Supabase UUID columns)
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback UUID v4
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
 
 export const genAccNum = () =>
   Array.from({ length: 20 }, () => Math.floor(Math.random() * 10)).join('');
