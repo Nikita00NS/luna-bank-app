@@ -12,8 +12,10 @@ export const TON_MANIFEST_URL = 'https://luna-bank-app.vercel.app/tonconnect-man
 // Project wallet for receiving payments
 export const PROJECT_WALLET = 'UQA9IgVuB-8GUVRttmh4zjhg5yFYXBMhGHWyt7ASJF1VuZJD';
 
-// TON Center API (free tier — no key needed for basic calls)
+// TON Center API (free tier)
 const TON_API_BASE = 'https://toncenter.com/api/v2';
+// TON API v2 (for jettons/NFTs)
+const TONAPI_BASE = 'https://tonapi.io/v2';
 
 /**
  * Convert nanotons to TON
@@ -189,6 +191,67 @@ export async function fetchTonTransactions(
   } catch {
     return [];
   }
+}
+
+// ===== Jetton (USDT, etc) Balances via tonapi.io =====
+
+export interface JettonBalance {
+  symbol: string;
+  name: string;
+  balance: number;
+  decimals: number;
+  address: string;
+  image?: string;
+  verified: boolean;
+}
+
+// Known jetton contract addresses on TON mainnet
+const KNOWN_JETTONS: Record<string, { symbol: string; currency: string }> = {
+  '0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe': { symbol: 'USD₮', currency: 'USDT' },
+};
+
+/**
+ * Fetch all jetton balances for a wallet address
+ */
+export async function fetchJettonBalances(address: string): Promise<JettonBalance[]> {
+  try {
+    const resp = await fetch(`${TONAPI_BASE}/accounts/${address}/jettons`, {
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (!resp.ok) return [];
+    const data = await resp.json();
+
+    if (!data.balances) return [];
+
+    return data.balances.map((item: any) => {
+      const decimals = item.jetton?.decimals || 9;
+      const rawBalance = BigInt(item.balance || '0');
+      const balance = Number(rawBalance) / Math.pow(10, decimals);
+
+      return {
+        symbol: item.jetton?.symbol || '???',
+        name: item.jetton?.name || 'Unknown',
+        balance,
+        decimals,
+        address: item.jetton?.address || '',
+        image: item.jetton?.image || undefined,
+        verified: item.jetton?.verification === 'whitelist',
+      };
+    }).filter((j: JettonBalance) => j.balance > 0);
+  } catch (err) {
+    console.warn('[TON] Jetton balances fetch failed:', err);
+    return [];
+  }
+}
+
+/**
+ * Get USDT balance specifically
+ */
+export async function fetchUsdtBalance(address: string): Promise<number> {
+  const jettons = await fetchJettonBalances(address);
+  const usdt = jettons.find((j) => j.symbol === 'USD₮' || j.symbol === 'USDT');
+  return usdt?.balance || 0;
 }
 
 /**

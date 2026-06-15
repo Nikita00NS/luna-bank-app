@@ -7,12 +7,14 @@ import {
   fetchTonBalance,
   fetchTonTransactions,
   fetchTonAccountInfo,
+  fetchJettonBalances,
   buildTonTransferTx,
   isValidTonAddress,
   fromNano,
   type TonBalance,
   type TonTransaction,
   type TonAccountInfo,
+  type JettonBalance,
 } from '../lib/ton';
 import { dbSaveWallet, dbCreateAccount, dbCreateNotification, dbUpdateBalance } from '../lib/db';
 import { useTonConnectUI, useTonWallet, useTonAddress } from '@tonconnect/ui-react';
@@ -34,6 +36,7 @@ export default function TonConnectScreen() {
   const [tab, setTab] = useState<Tab>('wallet');
   const [tonBalance, setTonBalance] = useState<TonBalance | null>(null);
   const [accountInfo, setAccountInfo] = useState<TonAccountInfo | null>(null);
+  const [jettons, setJettons] = useState<JettonBalance[]>([]);
   const [tonTxs, setTonTxs] = useState<TonTransaction[]>([]);
   const [loadingBalance, setLoadingBalance] = useState(false);
   const [loadingTxs, setLoadingTxs] = useState(false);
@@ -54,21 +57,37 @@ export default function TonConnectScreen() {
     if (!address) return;
     setLoadingBalance(true);
     try {
-      const [bal, info] = await Promise.all([
+      const [bal, info, jettonData] = await Promise.all([
         fetchTonBalance(address),
         fetchTonAccountInfo(address),
+        fetchJettonBalances(address),
       ]);
       setTonBalance(bal);
       setAccountInfo(info);
+      setJettons(jettonData);
 
-      // Sync real TON balance to account in store + Supabase
+      const store = useStore.getState();
+
+      // Sync real TON balance
       if (bal.ok) {
-        const store = useStore.getState();
         const tonAcc = store.accounts.find((a) => a.currency === 'TON');
-        if (tonAcc && Math.abs(tonAcc.balance - bal.balance) > 0.0001) {
-          const delta = bal.balance - tonAcc.balance;
-          store.updateBalance(tonAcc.id, delta);
-          dbUpdateBalance(tonAcc.id, delta).catch(() => {});
+        if (tonAcc) {
+          const newBal = bal.balance;
+          if (Math.abs(tonAcc.balance - newBal) > 0.0001) {
+            // Set absolute balance (not delta)
+            store.updateBalance(tonAcc.id, newBal - tonAcc.balance);
+            dbUpdateBalance(tonAcc.id, newBal - tonAcc.balance).catch(() => {});
+          }
+        }
+      }
+
+      // Sync USDT balance from jettons
+      const usdtJetton = jettonData.find((j) => j.symbol === 'USD₮' || j.symbol === 'USDT');
+      if (usdtJetton) {
+        const usdtAcc = store.accounts.find((a) => a.currency === 'USDT');
+        if (usdtAcc && Math.abs(usdtAcc.balance - usdtJetton.balance) > 0.001) {
+          store.updateBalance(usdtAcc.id, usdtJetton.balance - usdtAcc.balance);
+          dbUpdateBalance(usdtAcc.id, usdtJetton.balance - usdtAcc.balance).catch(() => {});
         }
       }
     } catch {}
@@ -363,6 +382,31 @@ export default function TonConnectScreen() {
                     <span className="text-xs text-white/50">QR</span>
                   </button>
                 </div>
+
+                {/* Jetton tokens */}
+                {jettons.length > 0 && (
+                  <div>
+                    <p className="text-xs text-white/30 font-medium mb-2">Токены на кошельке</p>
+                    <div className="space-y-1.5">
+                      {jettons.map((j, i) => (
+                        <div key={j.address || i} className="glass p-3 flex items-center gap-3 rounded-xl">
+                          {j.image ? (
+                            <img src={j.image} alt="" className="w-8 h-8 rounded-full" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center text-xs font-bold">
+                              {j.symbol.slice(0, 2)}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{j.name}</p>
+                            <p className="text-[10px] text-white/20">{j.symbol}{j.verified ? ' ✓' : ''}</p>
+                          </div>
+                          <p className="font-bold mono text-sm">{j.balance < 0.01 ? j.balance.toFixed(6) : j.balance < 1000 ? j.balance.toFixed(2) : j.balance.toFixed(0)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Disconnect */}
                 <button
