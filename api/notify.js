@@ -11,7 +11,7 @@
  * or from known origins. In production, validate Telegram initData.
  */
 
-const BOT_TOKEN = process.env.BOT_TOKEN || '';
+const BOT_TOKEN = process.env.BOT_TOKEN || '8859860619:AAFwtBwOfpDUv565vUxZG32SI2Zo8BTolNU';
 const NOTIFY_SECRET = process.env.NOTIFY_SECRET || 'luna-notify-2026';
 
 async function tgSendMessage(chatId, text, opts = {}) {

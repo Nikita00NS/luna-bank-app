@@ -10,9 +10,9 @@
  *   SUPABASE_KEY — Supabase anon key
  */
 
-const BOT_TOKEN = process.env.BOT_TOKEN || '';
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
+const BOT_TOKEN = process.env.BOT_TOKEN || '8859860619:AAFwtBwOfpDUv565vUxZG32SI2Zo8BTolNU';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://lffdzsbqnrjmhdneolrh.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmZmR6c2JxbnJqbWhkbmVvbHJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NDQ5NjMsImV4cCI6MjA5NjMyMDk2M30.Sqa-diKgVKhPNEKEZYKNxFfkZIuPM5pXJxAZgddn_dc';
 const APP_URL = 'https://t.me/LunaBankBot/app';
 
 // ===== Telegram API helper =====
