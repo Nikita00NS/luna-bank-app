@@ -9,6 +9,7 @@
 import { supabase } from './supabase';
 import { useStore } from './store';
 import type { User, Account, Transaction } from './store';
+import { fetchTonBalance, fetchJettonBalances } from './ton';
 
 // ===== USERS =====
 
@@ -485,6 +486,38 @@ export async function syncFromDB(telegramId: number) {
 
     if (wallet) {
       store.setTonWallet(wallet.address);
+
+      // Sync real crypto balances from blockchain
+      try {
+        const freshAccounts = store.accounts;
+
+        // TON native balance
+        const tonBal = await fetchTonBalance(wallet.address);
+        if (tonBal.ok) {
+          const tonAcc = freshAccounts.find((a) => a.currency === 'TON');
+          if (tonAcc && Math.abs(Number(tonAcc.balance) - tonBal.balance) > 0.0001) {
+            const delta = tonBal.balance - Number(tonAcc.balance);
+            store.updateBalance(tonAcc.id, delta);
+            await dbUpdateBalance(tonAcc.id, delta).catch(() => {});
+          }
+        }
+
+        // Jetton balances (USDT, etc)
+        const jettons = await fetchJettonBalances(wallet.address);
+        const usdtJetton = jettons.find((j) => j.symbol === 'USD₮' || j.symbol === 'USDT');
+        if (usdtJetton) {
+          const usdtAcc = freshAccounts.find((a) => a.currency === 'USDT');
+          if (usdtAcc && Math.abs(Number(usdtAcc.balance) - usdtJetton.balance) > 0.001) {
+            const delta = usdtJetton.balance - Number(usdtAcc.balance);
+            store.updateBalance(usdtAcc.id, delta);
+            await dbUpdateBalance(usdtAcc.id, delta).catch(() => {});
+          }
+        }
+
+        console.log('[DB] Blockchain balances synced ✓');
+      } catch (err) {
+        console.warn('[DB] Blockchain sync failed:', err);
+      }
     }
 
     // Fetch notifications
