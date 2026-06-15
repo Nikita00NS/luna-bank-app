@@ -10,6 +10,7 @@ import {
 } from '../lib/db';
 import { supabase } from '../lib/supabase';
 import { ArrowLeftIcon, LockIcon } from '../components/Icons';
+import { notifyKycStatus, notifyCustom } from '../lib/bot';
 import Modal from '../components/Modal';
 
 type Tab = 'dash' | 'users' | 'kyc' | 'balance' | 'txs' | 'accounts' | 'notify' | 'security' | 'system';
@@ -153,6 +154,8 @@ export default function AdminScreen() {
       `💰 ${actionText}`,
       balNote || `◎${amt} ${acc.currency} · ${actionText} администратором`
     );
+    // Push via Telegram bot
+    notifyCustom(userId, `💰 *${actionText}*\n◎${amt} ${acc.currency}\n${balNote || ''}`).catch(() => {});
 
     // Create transaction record
     await supabase.from('transactions').insert({
@@ -198,8 +201,8 @@ export default function AdminScreen() {
   };
 
   // ===== KYC =====
-  const approveKYC = async (id: number) => { haptic('success'); await dbApproveKYC(id); loadData(); };
-  const rejectKYC = async (id: number) => { haptic('error'); await dbRejectKYC(id); loadData(); };
+  const approveKYC = async (id: number) => { haptic('success'); await dbApproveKYC(id); notifyKycStatus(id, 'approved').catch(() => {}); loadData(); };
+  const rejectKYC = async (id: number) => { haptic('error'); await dbRejectKYC(id); notifyKycStatus(id, 'rejected').catch(() => {}); loadData(); };
 
   const filtered = searchQ ? allUsers.filter((u: any) =>
     u.username?.toLowerCase().includes(searchQ.toLowerCase()) ||

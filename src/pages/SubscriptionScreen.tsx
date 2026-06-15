@@ -3,6 +3,7 @@ import { useStore, uid } from '../lib/store';
 import { formatMoney, balanceInUsd, haptic } from '../lib/utils';
 import { SUBSCRIPTION_PLANS, LNC_RATE_USD } from '../lib/constants';
 import { dbUpdateUser, dbUpdateBalance, dbCreateTransaction, dbCreateNotification } from '../lib/db';
+import { notifySubscription } from '../lib/bot';
 import { ArrowLeftIcon, StarIcon, CheckIcon } from '../components/Icons';
 import AnimatedEmoji from '../components/AnimatedEmoji';
 import Modal from '../components/Modal';
@@ -79,6 +80,9 @@ export default function SubscriptionScreen() {
       read: false,
       created_at: new Date().toISOString(),
     });
+
+    // Telegram bot notification
+    notifySubscription(user.telegram_id, selectedPlan.name, selectedPlan.price).catch(() => {});
 
     setShowConfirm(false);
   };

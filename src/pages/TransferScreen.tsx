@@ -13,6 +13,7 @@ import {
 import { ArrowLeftIcon, SearchIcon, PhoneIcon, GlobeIcon, UserIcon } from '../components/Icons';
 import AnimatedEmoji from '../components/AnimatedEmoji';
 import { requestContact, formatPhone, normalizePhone, showAlert } from '../lib/telegram';
+import { notifyTransferReceived, notifyTransferSent } from '../lib/bot';
 
 type Step = 'search' | 'amount' | 'confirm' | 'success';
 type SearchTab = 'username' | 'phone' | 'ton';
@@ -184,6 +185,22 @@ export default function TransferScreen() {
         await dbUpdateBalance(recipientAcc.id, parsedAmount);
       }
     } catch {}
+
+    // Send Telegram bot notifications (async, don't block)
+    notifyTransferReceived(
+      recipient.telegram_id,
+      parsedAmount,
+      fromAccount.currency,
+      `${user.first_name} ${user.last_name}`,
+      note || undefined
+    ).catch(() => {});
+
+    notifyTransferSent(
+      user.telegram_id,
+      parsedAmount,
+      fromAccount.currency,
+      `${recipient.first_name} ${recipient.last_name}`
+    ).catch(() => {});
 
     setStep('success');
   };
