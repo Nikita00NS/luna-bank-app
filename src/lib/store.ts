@@ -19,7 +19,7 @@ export type Page =
   | 'swap' | 'exchange' | 'earn'
   | 'games' | 'nft'
   | 'social' | 'payments' | 'themes' | 'escrow'
-  | 'job-game';
+  | 'job-game' | 'referral';
 
 export interface User {
   telegram_id: number;
@@ -160,6 +160,7 @@ interface AppState {
   // Cards
   cards: Card[];
   addCard: (c: Card) => void;
+  setCards: (cards: Card[]) => void;
 
   // Transactions
   txs: Transaction[];
@@ -169,6 +170,7 @@ interface AppState {
   // Notifications
   notifs: Notification[];
   addNotif: (n: Notification) => void;
+  setNotifs: (notifs: Notification[]) => void;
   readNotif: (id: string) => void;
   unreadCount: () => number;
 
@@ -240,6 +242,7 @@ export const useStore = create<AppState>()(
       // Cards
       cards: [],
       addCard: (c) => set((s) => ({ cards: [...s.cards, c] })),
+      setCards: (cards) => set({ cards }),
 
       // Transactions
       txs: [],
@@ -249,6 +252,7 @@ export const useStore = create<AppState>()(
       // Notifications
       notifs: [],
       addNotif: (n) => set((s) => ({ notifs: [n, ...s.notifs] })),
+      setNotifs: (notifs) => set({ notifs }),
       readNotif: (id) =>
         set((s) => ({
           notifs: s.notifs.map((n) => (n.id === id ? { ...n, read: true } : n)),

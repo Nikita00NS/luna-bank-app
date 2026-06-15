@@ -43,6 +43,7 @@ import TonConnectScreen from './pages/TonConnectScreen';
 import MarketsScreen from './pages/MarketsScreen';
 import QRScreen from './pages/QRScreen';
 import ThemesScreen from './pages/ThemesScreen';
+import ReferralScreen from './pages/ReferralScreen';
 
 const pages: Record<string, React.ComponentType> = {
   splash: SplashScreen,
@@ -78,6 +79,7 @@ const pages: Record<string, React.ComponentType> = {
   markets: MarketsScreen,
   qr: QRScreen,
   themes: ThemesScreen,
+  referral: ReferralScreen,
 };
 
 const NAV_PAGES = ['home', 'cards', 'city', 'news', 'chat'];

@@ -164,6 +164,82 @@ export async function dbCreateCard(card: Record<string, any>) {
   return data;
 }
 
+export async function dbGetUserCards(userId: number) {
+  const { data } = await supabase
+    .from('cards')
+    .select('*')
+    .eq('account_id', userId.toString())
+    .order('created_at');
+  return data || [];
+}
+
+export async function dbGetCardsByAccountIds(accountIds: string[]) {
+  if (accountIds.length === 0) return [];
+  const { data } = await supabase
+    .from('cards')
+    .select('*')
+    .in('account_id', accountIds)
+    .order('created_at');
+  return data || [];
+}
+
+// ===== EXCHANGE ORDERS =====
+
+export async function dbCreateOrder(order: {
+  user_id: number;
+  coin: string;
+  side: string;
+  amount: number;
+  price: number;
+  total_lnc: number;
+}) {
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert({
+      from_user_id: order.user_id,
+      to_user_id: order.user_id,
+      from_account_id: 'exchange',
+      to_account_id: 'exchange',
+      amount: order.amount,
+      fee: 0,
+      currency: order.coin,
+      type: 'transfer',
+      status: 'completed',
+      note: `${order.side.toUpperCase()} ${order.coin} @ $${order.price}`,
+    })
+    .select()
+    .single();
+
+  if (error) console.error('[DB] createOrder:', error.message);
+  return data;
+}
+
+// ===== REFERRALS =====
+
+export async function dbCreateReferral(userId: number, referredUserId: number, reward: number) {
+  const { error } = await supabase
+    .from('referrals')
+    .insert({ user_id: userId, referred_user_id: referredUserId, reward });
+  if (error) console.error('[DB] createReferral:', error.message);
+}
+
+export async function dbGetReferrals(userId: number) {
+  const { data } = await supabase
+    .from('referrals')
+    .select('*, referred:referred_user_id(username, first_name)')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  return data || [];
+}
+
+export async function dbCountReferrals(userId: number) {
+  const { count } = await supabase
+    .from('referrals')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId);
+  return count || 0;
+}
+
 // ===== NOTIFICATIONS =====
 
 export async function dbCreateNotification(notif: {
@@ -253,6 +329,20 @@ export async function syncFromDB(telegramId: number) {
   try {
     const store = useStore.getState();
 
+    // Fetch user (latest data from DB overrides local)
+    const dbUser = await dbGetUser(telegramId);
+    if (dbUser) {
+      store.patchUser({
+        level: dbUser.level,
+        xp: dbUser.xp,
+        kyc_status: dbUser.kyc_status,
+        subscription: dbUser.subscription,
+        subscription_expires: dbUser.subscription_expires,
+        phone_number: dbUser.phone_number,
+        role: dbUser.role,
+      });
+    }
+
     // Fetch accounts
     const accounts = await dbGetUserAccounts(telegramId);
     if (accounts.length > 0) {
@@ -265,6 +355,15 @@ export async function syncFromDB(telegramId: number) {
       store.setTxs(txs as Transaction[]);
     }
 
+    // Fetch cards
+    const accountIds = (accounts || []).map((a: any) => a.id);
+    if (accountIds.length > 0) {
+      const cards = await dbGetCardsByAccountIds(accountIds);
+      if (cards.length > 0) {
+        store.setCards(cards as any[]);
+      }
+    }
+
     // Fetch wallet
     const { data: wallet } = await supabase
       .from('wallet_connections')
@@ -274,6 +373,18 @@ export async function syncFromDB(telegramId: number) {
 
     if (wallet) {
       store.setTonWallet(wallet.address);
+    }
+
+    // Fetch notifications
+    const { data: notifs } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', telegramId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (notifs && notifs.length > 0) {
+      store.setNotifs(notifs as any[]);
     }
 
     console.log('[DB] Synced from Supabase ✓');

@@ -190,6 +190,17 @@ export default async function handler(req, res) {
       const tgUserId = user?.id;
 
       if (text === '/start' || text.startsWith('/start ')) {
+        // Check for referral code
+        const parts = text.split(' ');
+        if (parts.length > 1 && parts[1].startsWith('REF_')) {
+          const referrerId = parts[1].replace('REF_', '');
+          // Save referral info (will be processed on app registration)
+          await sendMessage(chatId,
+            `🌙 *Luna Bank*\n━━━━━━━━━━━\n\n` +
+            `🎁 Вы пришли по реферальной ссылке!\n` +
+            `Зарегистрируйтесь в приложении, чтобы получить бонус ◎50 LNC 👇`
+          );
+        }
         await handleStart(chatId, user);
       } else if (text === '/help') {
         await handleHelp(chatId);

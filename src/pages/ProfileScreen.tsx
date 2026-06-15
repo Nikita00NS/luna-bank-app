@@ -4,7 +4,7 @@ import { haptic, shortAddr } from '../lib/utils';
 import {
   UserIcon, StarIcon, WalletIcon, LinkIcon, BellIcon,
   LockIcon, MessageIcon, ShieldIcon, SettingsIcon,
-  ChevronRightIcon, QrCodeIcon, PaletteIcon, PhoneIcon,
+  ChevronRightIcon, QrCodeIcon, PaletteIcon, PhoneIcon, UsersIcon,
 } from '../components/Icons';
 import { isOwner } from '../lib/admin';
 import { requestContact, formatPhone, showAlert } from '../lib/telegram';
@@ -45,6 +45,7 @@ export default function ProfileScreen() {
     { icon: LockIcon, label: 'Безопасность', desc: '', page: 'settings' },
     { icon: MessageIcon, label: 'Поддержка', desc: '', page: 'chat' },
     { icon: PaletteIcon, label: 'Оформление', desc: '', page: 'themes' },
+    { icon: UsersIcon, label: 'Рефералы', desc: 'Приглашай друзей', page: 'referral' },
     { icon: ShieldIcon, label: 'FAQ', desc: '', page: 'faq' },
   ];
 
