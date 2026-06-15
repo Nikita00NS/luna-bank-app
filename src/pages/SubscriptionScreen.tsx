@@ -4,6 +4,7 @@ import { formatMoney, balanceInUsd, haptic } from '../lib/utils';
 import { SUBSCRIPTION_PLANS, LNC_RATE_USD } from '../lib/constants';
 import { dbUpdateUser, dbUpdateBalance, dbCreateTransaction, dbCreateNotification } from '../lib/db';
 import { ArrowLeftIcon, StarIcon, CheckIcon } from '../components/Icons';
+import AnimatedEmoji from '../components/AnimatedEmoji';
 import Modal from '../components/Modal';
 
 export default function SubscriptionScreen() {
@@ -154,18 +155,27 @@ export default function SubscriptionScreen() {
       </div>
 
       {/* Confirm Modal */}
-      <Modal open={showConfirm} onClose={() => setShowConfirm(false)} title="Подтверждение">
+      <Modal open={showConfirm} onClose={() => setShowConfirm(false)} title="Подтверждение покупки">
         {selectedPlan && (
           <div className="space-y-4">
+            {/* Animated header */}
+            <div className="text-center">
+              <AnimatedEmoji type={selectedPlan.id === 'cosmic' ? 'rocket' : 'star'} size={48} />
+              <h3 className="font-bold text-lg mt-2">{selectedPlan.name}</h3>
+              <p className="text-xs text-white/30">{selectedPlan.icon} Ежемесячная подписка</p>
+            </div>
+
             {/* Details */}
-            <div className="space-y-2">
+            <div className="glass p-4 rounded-xl space-y-2.5">
               {[
-                ['Тариф', selectedPlan.name],
-                ['Цена', `$${selectedPlan.price}/мес`],
-                ['В LNC', `◎${(selectedPlan.price / LNC_RATE_USD).toFixed(0)}`],
-                ['Баланс', personalAcc ? `◎${personalAcc.balance.toFixed(2)}` : 'Нет счёта'],
+                ['📋 Тариф', selectedPlan.name],
+                ['💰 Цена', `$${selectedPlan.price}/мес`],
+                ['◎ В Luna Coin', `◎${(selectedPlan.price / LNC_RATE_USD).toFixed(0)} LNC`],
+                ['📊 Комиссия', `${selectedPlan.commission}%`],
+                ['🎁 Кэшбэк', `${selectedPlan.cashback}%`],
+                ['💳 Баланс', personalAcc ? `◎${personalAcc.balance.toFixed(2)}` : 'Нет счёта'],
               ].map(([label, value]) => (
-                <div key={label} className="flex justify-between text-sm">
+                <div key={label} className="flex justify-between text-sm py-0.5">
                   <span className="text-white/35">{label}</span>
                   <span className="font-medium mono">{value}</span>
                 </div>
@@ -175,7 +185,14 @@ export default function SubscriptionScreen() {
             {/* Insufficient funds warning */}
             {personalAcc && personalAcc.balance < selectedPlan.price / LNC_RATE_USD && (
               <div className="bg-red-500/10 border border-red-500/15 rounded-xl p-3 text-sm text-red-400">
-                Недостаточно средств
+                ⚠️ Недостаточно средств на счёте
+              </div>
+            )}
+
+            {/* After purchase info */}
+            {personalAcc && personalAcc.balance >= selectedPlan.price / LNC_RATE_USD && (
+              <div className="text-[10px] text-white/20 text-center">
+                Остаток после покупки: ◎{(personalAcc.balance - selectedPlan.price / LNC_RATE_USD).toFixed(2)} LNC
               </div>
             )}
 
@@ -184,7 +201,13 @@ export default function SubscriptionScreen() {
               disabled={!personalAcc || personalAcc.balance < selectedPlan.price / LNC_RATE_USD}
               className="btn-primary w-full"
             >
-              Оплатить ◎{(selectedPlan.price / LNC_RATE_USD).toFixed(0)}
+              ✅ Оплатить ◎{(selectedPlan.price / LNC_RATE_USD).toFixed(0)} LNC
+            </button>
+            <button
+              onClick={() => setShowConfirm(false)}
+              className="btn-ghost w-full"
+            >
+              Отмена
             </button>
           </div>
         )}

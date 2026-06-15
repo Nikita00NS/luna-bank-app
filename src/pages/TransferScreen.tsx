@@ -11,6 +11,7 @@ import {
   dbCreateNotification,
 } from '../lib/db';
 import { ArrowLeftIcon, SearchIcon, PhoneIcon, GlobeIcon, UserIcon } from '../components/Icons';
+import AnimatedEmoji from '../components/AnimatedEmoji';
 import { requestContact, formatPhone, normalizePhone, showAlert } from '../lib/telegram';
 
 type Step = 'search' | 'amount' | 'confirm' | 'success';
@@ -625,8 +626,8 @@ export default function TransferScreen() {
       {step === 'success' && recipient && (
         <div className="flex-1 flex flex-col items-center justify-center px-5 animate-fade-in">
           <div className="relative mb-8">
-            <div className="w-24 h-24 rounded-full bg-emerald-500/15 flex items-center justify-center animate-check-pop">
-              <span className="text-5xl">✅</span>
+            <div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center">
+              <AnimatedEmoji type="success" size={72} loop={false} />
             </div>
             <div className="absolute inset-0 w-24 h-24 rounded-full bg-emerald-500/10 animate-pulse-ring" />
           </div>

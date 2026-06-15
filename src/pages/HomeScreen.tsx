@@ -3,6 +3,7 @@ import { useStore } from '../lib/store';
 import { formatMoney, balanceInUsd, haptic, getGreeting } from '../lib/utils';
 import { CURRENCIES, LNC_RATE_USD } from '../lib/constants';
 import Logo from '../components/Logo';
+import AnimatedEmoji from '../components/AnimatedEmoji';
 import {
   SendIcon, DownloadIcon, SwapIcon, DiamondIcon,
   ChartIcon, GamepadIcon, ImageIcon, ShieldIcon,
@@ -99,7 +100,7 @@ export default function HomeScreen() {
             onClick={() => { haptic('light'); go('notifications'); }}
             className="relative glass rounded-full w-10 h-10 flex items-center justify-center active:scale-95 transition-transform"
           >
-            🔔
+            <AnimatedEmoji type="bell" size={22} />
             {unreadCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-[9px] font-bold ring-2 ring-black">
                 {unreadCount}

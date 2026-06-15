@@ -4,6 +4,7 @@ import { hashPin, haptic } from '../lib/utils';
 import { dbUpsertUser } from '../lib/db';
 import PinPad from '../components/PinPad';
 import Logo from '../components/Logo';
+import AnimatedEmoji from '../components/AnimatedEmoji';
 
 type Step = 'welcome' | 'pin-create' | 'pin-confirm';
 
@@ -104,9 +105,12 @@ export default function OnboardingScreen() {
     <div className="h-full flex flex-col bg-black safe-top">
       {/* Center content */}
       <div className="flex-1 flex flex-col items-center justify-center px-8">
-        {/* Logo */}
-        <div className="animate-float mb-10">
-          <Logo size={112} glow />
+        {/* Logo with animated moon */}
+        <div className="mb-4">
+          <AnimatedEmoji type="moon" size={64} />
+        </div>
+        <div className="animate-float mb-6">
+          <Logo size={96} glow />
         </div>
 
         {/* Title */}

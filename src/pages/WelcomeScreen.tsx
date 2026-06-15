@@ -4,6 +4,7 @@ import { getGreeting, hashPin, haptic } from '../lib/utils';
 import { syncFromDB } from '../lib/db';
 import PinPad from '../components/PinPad';
 import Logo from '../components/Logo';
+import AnimatedEmoji from '../components/AnimatedEmoji';
 
 export default function WelcomeScreen() {
   const { user, go, setAuthed } = useStore();
@@ -64,6 +65,7 @@ export default function WelcomeScreen() {
       <div className="px-6 pt-6 flex items-center gap-3 animate-fade-in">
         <Logo size={40} />
         <span className="font-black text-lg tracking-tight">Luna Bank</span>
+        <AnimatedEmoji type="moon" size={24} />
       </div>
 
       {/* Center */}

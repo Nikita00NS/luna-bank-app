@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useStore } from '../lib/store';
 import Logo from '../components/Logo';
+import AnimatedEmoji from '../components/AnimatedEmoji';
 
 export default function SplashScreen() {
   const { go, user } = useStore();
@@ -21,8 +22,11 @@ export default function SplashScreen() {
 
       {/* Logo + Title */}
       <div className="relative z-10 flex flex-col items-center animate-scale-in">
-        <div className="animate-float mb-8">
-          <Logo size={96} glow />
+        <div className="mb-4">
+          <AnimatedEmoji type="moon" size={80} />
+        </div>
+        <div className="animate-float mb-4">
+          <Logo size={72} glow />
         </div>
 
         <h1 className="text-4xl font-extrabold tracking-tight">
@@ -36,7 +40,7 @@ export default function SplashScreen() {
 
       {/* Loading spinner */}
       <div className="absolute bottom-16">
-        <div className="w-7 h-7 border-2 border-white/15 border-t-yellow-400/80 rounded-full animate-spin" />
+        <AnimatedEmoji type="loading" size={28} />
       </div>
     </div>
   );
