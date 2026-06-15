@@ -308,14 +308,32 @@ export default function HomeScreen() {
       {/* ===== Recent Transactions ===== */}
       {txs.length > 0 && (
         <section className="px-5 mt-7 mb-4">
-          <h3 className="font-bold text-[15px] mb-3">Последние операции</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-[15px]">Последние операции</h3>
+            <button
+              onClick={() => { haptic('light'); go('history'); }}
+              className="text-xs text-white/30 font-medium active:scale-95"
+            >
+              Все →
+            </button>
+          </div>
           <div className="space-y-2">
             {txs.slice(0, 5).map((tx) => {
               const isOutgoing = tx.from_user_id === user.telegram_id;
               return (
-                <div key={tx.id} className="glass p-3 flex items-center gap-3">
+                <button
+                  key={tx.id}
+                  onClick={() => {
+                    haptic('light');
+                    useStore.getState().selTx(tx.id);
+                    go('tx-detail');
+                  }}
+                  className="w-full glass p-3 flex items-center gap-3 active:scale-[0.98] transition-all text-left rounded-xl"
+                >
                   {/* Icon */}
-                  <div className="w-9 h-9 rounded-lg bg-white/[0.04] flex items-center justify-center text-lg">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg ${
+                    isOutgoing ? 'bg-red-500/10' : 'bg-emerald-500/10'
+                  }`}>
                     {tx.type === 'transfer' ? '📤' :
                      tx.type === 'deposit' ? '📥' :
                      tx.type === 'subscription' ? '⭐' :
@@ -345,7 +363,7 @@ export default function HomeScreen() {
                       'USD'
                     )}
                   </p>
-                </div>
+                </button>
               );
             })}
           </div>

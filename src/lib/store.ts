@@ -20,7 +20,8 @@ export type Page =
   | 'games' | 'nft'
   | 'social' | 'payments' | 'themes' | 'escrow'
   | 'job-game' | 'referral'
-  | 'achievements' | 'savings' | 'stories' | 'portfolio' | 'p2p' | 'marketplace';
+  | 'achievements' | 'savings' | 'stories' | 'portfolio' | 'p2p' | 'marketplace'
+  | 'history' | 'tx-detail';
 
 export interface User {
   telegram_id: number;
@@ -172,6 +173,8 @@ interface AppState {
   // Accounts
   accounts: Account[];
   selAccountId: string | null;
+  selTxId: string | null;
+  selTx: (id: string | null) => void;
   addAccount: (a: Account) => void;
   setAccounts: (accs: Account[]) => void;
   updateBalance: (id: string, delta: number) => void;
@@ -249,6 +252,8 @@ export const useStore = create<AppState>()(
       // Accounts
       accounts: [],
       selAccountId: null,
+      selTxId: null,
+      selTx: (id) => set({ selTxId: id }),
       addAccount: (a) => set((s) => ({ accounts: [...s.accounts, a] })),
       setAccounts: (accs) => set({ accounts: accs }),
       updateBalance: (id, delta) =>

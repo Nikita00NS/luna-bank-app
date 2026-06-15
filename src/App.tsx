@@ -50,6 +50,8 @@ import StoriesScreen from './pages/StoriesScreen';
 import PortfolioScreen from './pages/PortfolioScreen';
 import P2PScreen from './pages/P2PScreen';
 import MarketplaceScreen from './pages/MarketplaceScreen';
+import HistoryScreen from './pages/HistoryScreen';
+import TxDetailScreen from './pages/TxDetailScreen';
 
 const pages: Record<string, React.ComponentType> = {
   splash: SplashScreen,
@@ -92,6 +94,8 @@ const pages: Record<string, React.ComponentType> = {
   portfolio: PortfolioScreen,
   p2p: P2PScreen,
   marketplace: MarketplaceScreen,
+  history: HistoryScreen,
+  'tx-detail': TxDetailScreen,
 };
 
 const NAV_PAGES = ['home', 'cards', 'city', 'news', 'chat'];
