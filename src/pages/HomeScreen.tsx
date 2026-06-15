@@ -31,6 +31,8 @@ export default function HomeScreen() {
     txs,
     dispCurrency,
     setDispCurrency,
+    walletJettons,
+    tonWallet,
   } = useStore();
 
   const greeting = getGreeting();
@@ -217,6 +219,54 @@ export default function HomeScreen() {
           </div>
         )}
       </section>
+
+      {/* ===== Wallet Tokens ===== */}
+      {tonWallet && walletJettons.length > 0 && (
+        <section className="px-5 mt-7">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-[15px]">Токены кошелька</h3>
+            <button
+              onClick={() => { haptic('light'); go('ton-connect'); }}
+              className="text-xs text-white/30 font-medium"
+            >
+              Все →
+            </button>
+          </div>
+          <div className="space-y-2">
+            {walletJettons.map((token, i) => (
+              <div
+                key={token.symbol + i}
+                className="glass p-3 flex items-center gap-3 animate-slide-up active:scale-[0.98] transition-all"
+                style={{ animationDelay: `${i * 0.04}s` }}
+              >
+                {token.image ? (
+                  <img src={token.image} alt="" className="w-9 h-9 rounded-full" />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-white/[0.06] flex items-center justify-center text-xs font-bold mono">
+                    {token.symbol.slice(0, 3)}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate">{token.name}</p>
+                  <p className="text-[10px] text-white/25">
+                    {token.symbol}
+                    {token.verified && ' ✓'}
+                  </p>
+                </div>
+                <p className="font-bold mono text-sm">
+                  {token.balance < 0.01
+                    ? token.balance.toFixed(6)
+                    : token.balance < 1000
+                      ? token.balance.toFixed(2)
+                      : token.balance >= 1e6
+                        ? `${(token.balance / 1e6).toFixed(1)}M`
+                        : token.balance.toFixed(0)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ===== More Actions ===== */}
       <section className="px-5 mt-7">

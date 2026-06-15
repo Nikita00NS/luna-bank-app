@@ -68,6 +68,15 @@ export default function TonConnectScreen() {
 
       const store = useStore.getState();
 
+      // Save jettons to global store for HomeScreen
+      store.setWalletJettons(jettonData.map((j) => ({
+        symbol: j.symbol,
+        name: j.name,
+        balance: j.balance,
+        image: j.image,
+        verified: j.verified,
+      })));
+
       // Sync real TON balance
       if (bal.ok) {
         const tonAcc = store.accounts.find((a) => a.currency === 'TON');

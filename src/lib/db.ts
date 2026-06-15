@@ -514,7 +514,16 @@ export async function syncFromDB(telegramId: number) {
           }
         }
 
-        console.log('[DB] Blockchain balances synced ✓');
+        // Save all jettons to store for HomeScreen display
+        store.setWalletJettons(jettons.map((j) => ({
+          symbol: j.symbol,
+          name: j.name,
+          balance: j.balance,
+          image: j.image,
+          verified: j.verified,
+        })));
+
+        console.log('[DB] Blockchain balances synced ✓', { ton: tonBal.balance, jettons: jettons.length });
       } catch (err) {
         console.warn('[DB] Blockchain sync failed:', err);
       }

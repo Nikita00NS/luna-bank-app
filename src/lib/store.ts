@@ -100,6 +100,15 @@ export interface ChatMessage {
   timestamp: string;
 }
 
+export interface WalletJetton {
+  symbol: string;
+  name: string;
+  balance: number;
+  image?: string;
+  verified: boolean;
+  priceUsd?: number;
+}
+
 export interface OwnedBusiness {
   id: string;
   type: string;
@@ -188,6 +197,8 @@ interface AppState {
   // TON
   tonWallet: string | null;
   setTonWallet: (a: string | null) => void;
+  walletJettons: WalletJetton[];
+  setWalletJettons: (j: WalletJetton[]) => void;
 
   // City
   businesses: OwnedBusiness[];
@@ -273,6 +284,8 @@ export const useStore = create<AppState>()(
       // TON
       tonWallet: null,
       setTonWallet: (a) => set({ tonWallet: a }),
+      walletJettons: [],
+      setWalletJettons: (j) => set({ walletJettons: j }),
 
       // City
       businesses: [],
@@ -304,6 +317,7 @@ export const useStore = create<AppState>()(
         txs: s.txs,
         notifs: s.notifs,
         tonWallet: s.tonWallet,
+        walletJettons: s.walletJettons,
         businesses: s.businesses,
         jobCooldowns: s.jobCooldowns,
         dispCurrency: s.dispCurrency,
