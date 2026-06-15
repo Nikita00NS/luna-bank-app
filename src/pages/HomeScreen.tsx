@@ -228,8 +228,11 @@ export default function HomeScreen() {
             { Icon: ShieldIcon, label: 'Гарант', page: 'escrow' as const },
             { Icon: ReceiptIcon, label: 'Платежи', page: 'payments' as const },
             { Icon: UsersIcon, label: 'Друзья', page: 'social' as const },
-            { Icon: TrendingUpIcon, label: 'Курсы', page: 'markets' as const },
-            { Icon: LinkIcon, label: 'TON', page: 'ton-connect' as const },
+            { Icon: TrendingUpIcon, label: 'Портфель', page: 'portfolio' as const },
+            { Icon: LinkIcon, label: 'P2P', page: 'p2p' as const },
+            { Icon: ChartIcon, label: 'Маркет', page: 'marketplace' as const },
+            { Icon: ImageIcon, label: 'Stories', page: 'stories' as const },
+            { Icon: GamepadIcon, label: 'Ачивки', page: 'achievements' as const },
           ]).map((item, i) => (
             <button
               key={item.label}

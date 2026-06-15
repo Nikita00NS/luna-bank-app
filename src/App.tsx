@@ -44,6 +44,12 @@ import MarketsScreen from './pages/MarketsScreen';
 import QRScreen from './pages/QRScreen';
 import ThemesScreen from './pages/ThemesScreen';
 import ReferralScreen from './pages/ReferralScreen';
+import AchievementsScreen from './pages/AchievementsScreen';
+import SavingsScreen from './pages/SavingsScreen';
+import StoriesScreen from './pages/StoriesScreen';
+import PortfolioScreen from './pages/PortfolioScreen';
+import P2PScreen from './pages/P2PScreen';
+import MarketplaceScreen from './pages/MarketplaceScreen';
 
 const pages: Record<string, React.ComponentType> = {
   splash: SplashScreen,
@@ -80,6 +86,12 @@ const pages: Record<string, React.ComponentType> = {
   qr: QRScreen,
   themes: ThemesScreen,
   referral: ReferralScreen,
+  achievements: AchievementsScreen,
+  savings: SavingsScreen,
+  stories: StoriesScreen,
+  portfolio: PortfolioScreen,
+  p2p: P2PScreen,
+  marketplace: MarketplaceScreen,
 };
 
 const NAV_PAGES = ['home', 'cards', 'city', 'news', 'chat'];

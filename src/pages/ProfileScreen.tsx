@@ -46,6 +46,7 @@ export default function ProfileScreen() {
     { icon: MessageIcon, label: 'Поддержка', desc: '', page: 'chat' },
     { icon: PaletteIcon, label: 'Оформление', desc: '', page: 'themes' },
     { icon: UsersIcon, label: 'Рефералы', desc: 'Приглашай друзей', page: 'referral' },
+    { icon: StarIcon, label: 'Достижения', desc: '', page: 'achievements' },
     { icon: ShieldIcon, label: 'FAQ', desc: '', page: 'faq' },
   ];
 
