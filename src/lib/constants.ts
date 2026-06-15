@@ -104,7 +104,7 @@ export const SUBSCRIPTION_PLANS = [
 // ===== Display Currencies =====
 export const CURRENCIES: Record<string, { symbol: string; flag: string; rate: number }> = {
   USD: { symbol: '$', flag: '🇺🇸', rate: 1 },
-  LNC: { symbol: '◎', flag: '🌙', rate: 1 / LNC_RATE_USD },
+  LNC: { symbol: '🌙', flag: '🌙', rate: 1 / LNC_RATE_USD },
   RUB: { symbol: '₽', flag: '🇷🇺', rate: 89.5 },
   EUR: { symbol: '€', flag: '🇪🇺', rate: 0.92 },
   GBP: { symbol: '£', flag: '🇬🇧', rate: 0.79 },

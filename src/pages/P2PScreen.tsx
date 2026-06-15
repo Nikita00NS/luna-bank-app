@@ -116,11 +116,11 @@ export default function P2PScreen() {
       id: uid(), from_user_id: user.telegram_id, to_user_id: selectedOffer.user_id,
       from_account_id: lncAcc.id, to_account_id: 'p2p', amount: amt, fee: 0, currency: 'LNC',
       type: 'transfer', status: 'completed',
-      note: `P2P ${selectedOffer.type === 'sell' ? 'Покупка' : 'Продажа'} ◎${amt} @ ₽${selectedOffer.price}`,
+      note: `P2P ${selectedOffer.type === 'sell' ? 'Покупка' : 'Продажа'} 🌙${amt} @ ₽${selectedOffer.price}`,
       created_at: new Date().toISOString(),
     });
 
-    addNotif({ id: uid(), title: '🔄 P2P Сделка', message: `◎${amt} LNC по ₽${selectedOffer.price}/LNC`, type: 'transfer', read: false, created_at: new Date().toISOString() });
+    addNotif({ id: uid(), title: '🔄 P2P Сделка', message: `🌙${amt} LNC по ₽${selectedOffer.price}/LNC`, type: 'transfer', read: false, created_at: new Date().toISOString() });
 
     // Update offer in DB
     const remaining = selectedOffer.amount - amt;
@@ -181,7 +181,7 @@ export default function P2PScreen() {
                     </div>
                   </div>
                   <div className="flex justify-between text-xs text-white/30">
-                    <span>◎{offer.amount} LNC</span>
+                    <span>🌙{offer.amount} LNC</span>
                     <span>{offer.payment_methods.join(' ')}</span>
                   </div>
                 </button>
@@ -203,7 +203,7 @@ export default function P2PScreen() {
                     {o.type === 'sell' ? '↓' : '↑'}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium">{o.type === 'sell' ? 'Продажа' : 'Покупка'} ◎{o.amount}</p>
+                    <p className="text-sm font-medium">{o.type === 'sell' ? 'Продажа' : 'Покупка'} 🌙{o.amount}</p>
                     <p className="text-[10px] text-white/25">₽{o.price}/LNC · {o.status}</p>
                   </div>
                 </div>
@@ -244,7 +244,7 @@ export default function P2PScreen() {
             <div className="glass p-3 rounded-xl space-y-1.5">
               <div className="flex justify-between text-sm"><span className="text-white/35">Продавец</span><span>@{selectedOffer.username}</span></div>
               <div className="flex justify-between text-sm"><span className="text-white/35">Цена</span><span className="font-bold">₽{selectedOffer.price}/LNC</span></div>
-              <div className="flex justify-between text-sm"><span className="text-white/35">Доступно</span><span>◎{selectedOffer.amount}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-white/35">Доступно</span><span>🌙{selectedOffer.amount}</span></div>
               <div className="flex justify-between text-sm"><span className="text-white/35">Оплата</span><span className="text-xs">{selectedOffer.payment_methods.join(', ')}</span></div>
             </div>
             <input type="number" value={dealAmount} onChange={(e) => setDealAmount(e.target.value)} placeholder="Количество LNC"
@@ -253,7 +253,7 @@ export default function P2PScreen() {
               <p className="text-center text-sm text-white/40">= ₽{((parseFloat(dealAmount) || 0) * selectedOffer.price).toFixed(0)}</p>
             )}
             <button onClick={executeDeal} disabled={!dealAmount} className="btn-primary w-full">
-              {selectedOffer.type === 'sell' ? 'Купить' : 'Продать'} ◎{dealAmount || 0}
+              {selectedOffer.type === 'sell' ? 'Купить' : 'Продать'} 🌙{dealAmount || 0}
             </button>
           </div>
         )}

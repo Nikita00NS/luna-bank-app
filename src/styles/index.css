@@ -287,3 +287,13 @@ input, textarea, select { font-family: inherit; }
 .ae-once .ae-rocket {
   animation-iteration-count: 1;
 }
+
+/* Luna Coin icon glow */
+.lnc-icon {
+  animation: lnc-glow 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.3));
+}
+@keyframes lnc-glow {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.2)); }
+  50% { filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.5)); }
+}

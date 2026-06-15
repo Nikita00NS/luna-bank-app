@@ -152,10 +152,10 @@ export default function AdminScreen() {
     await dbAdminSendNotification(
       userId,
       `💰 ${actionText}`,
-      balNote || `◎${amt} ${acc.currency} · ${actionText} администратором`
+      balNote || `🌙${amt} ${acc.currency} · ${actionText} администратором`
     );
     // Push via Telegram bot
-    notifyCustom(userId, `💰 *${actionText}*\n◎${amt} ${acc.currency}\n${balNote || ''}`).catch(() => {});
+    notifyCustom(userId, `💰 *${actionText}*\n🌙{amt} ${acc.currency}\n${balNote || ''}`).catch(() => {});
 
     // Create transaction record
     await supabase.from('transactions').insert({
@@ -256,8 +256,8 @@ export default function AdminScreen() {
               {[
                 { i: '👥', l: 'Юзеры', v: stats.userCount, c: 'text-blue-400' },
                 { i: '💸', l: 'Транзакции', v: stats.totalTxs, c: 'text-emerald-400' },
-                { i: '📊', l: 'Объём', v: `◎${stats.totalVolume.toFixed(0)}`, c: 'text-violet-400' },
-                { i: '💰', l: 'Комиссии', v: `◎${stats.totalFees.toFixed(2)}`, c: 'text-yellow-400' },
+                { i: '📊', l: 'Объём', v: `🌙${stats.totalVolume.toFixed(0)}`, c: 'text-violet-400' },
+                { i: '💰', l: 'Комиссии', v: `🌙${stats.totalFees.toFixed(2)}`, c: 'text-yellow-400' },
                 { i: '🔐', l: 'KYC очередь', v: pendingKYC.length, c: pendingKYC.length > 0 ? 'text-red-400' : 'text-emerald-400' },
                 { i: '🏦', l: 'Счетов', v: allAccounts.length, c: 'text-cyan-400' },
               ].map(s => (
@@ -280,7 +280,7 @@ export default function AdminScreen() {
                     <p className="text-xs font-medium truncate">{tx.type} {tx.note ? `· ${tx.note}` : ''}</p>
                     <p className="text-[10px] text-white/20">{tx.from_user_id} → {tx.to_user_id}{tx.created_at ? ` · ${timeAgo(tx.created_at)}` : ''}</p>
                   </div>
-                  <p className="text-xs font-bold mono">◎{Number(tx.amount).toFixed(2)}</p>
+                  <p className="text-xs font-bold mono">🌙{Number(tx.amount).toFixed(2)}</p>
                 </div>
               ))}
             </div>
@@ -394,7 +394,7 @@ export default function AdminScreen() {
                 <div className="flex gap-2 mb-4">
                   {[100, 500, 1000, 5000, 10000].map(v => (
                     <button key={v} onClick={() => setBalAmount(String(v))} className="flex-1 glass rounded-lg py-1.5 text-xs mono active:scale-95 transition-transform">
-                      ◎{v >= 1000 ? `${v / 1000}K` : v}
+                      🌙{v >= 1000 ? `${v / 1000}K` : v}
                     </button>
                   ))}
                 </div>
@@ -407,7 +407,7 @@ export default function AdminScreen() {
                 <button onClick={executeBalance} disabled={!balAmount || !balSelAcc}
                   className={`w-full py-4 rounded-2xl font-bold text-base transition-all active:scale-[0.97] disabled:opacity-30
                     ${balAction === 'add' ? 'bg-emerald-500 text-white' : balAction === 'remove' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'}`}>
-                  {balAction === 'add' ? `➕ Начислить ◎${balAmount || 0}` : balAction === 'remove' ? `➖ Списать ◎${balAmount || 0}` : `🔧 Установить ◎${balAmount || 0}`}
+                  {balAction === 'add' ? `➕ Начислить 🌙{balAmount || 0}` : balAction === 'remove' ? `➖ Списать 🌙{balAmount || 0}` : `🔧 Установить 🌙{balAmount || 0}`}
                 </button>
 
                 {balDone && (
@@ -465,8 +465,8 @@ export default function AdminScreen() {
                   <p className="text-[10px] text-white/20">{tx.from_user_id}→{tx.to_user_id} · {tx.created_at ? new Date(tx.created_at).toLocaleString('ru-RU') : '—'}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-bold mono">◎{Number(tx.amount).toFixed(2)}</p>
-                  {Number(tx.fee) > 0 && <p className="text-[10px] text-yellow-400/50">fee:◎{Number(tx.fee).toFixed(2)}</p>}
+                  <p className="text-xs font-bold mono">🌙{Number(tx.amount).toFixed(2)}</p>
+                  {Number(tx.fee) > 0 && <p className="text-[10px] text-yellow-400/50">fee:🌙{Number(tx.fee).toFixed(2)}</p>}
                 </div>
               </div>
             ))}
@@ -568,7 +568,7 @@ export default function AdminScreen() {
         {tab === 'system' && (
           <div className="space-y-3 animate-fade-in">
             {[
-              { i: '◎', t: 'Курс LNC', d: `1 LNC = $${LNC_RATE_USD}` },
+              { i: '🌙', t: 'Курс LNC', d: `1 LNC = $${LNC_RATE_USD}` },
               { i: '💰', t: 'Комиссии', d: 'Free 0.5% | Plus 0.3% | Cosmic 0%' },
               { i: '📊', t: 'Лимиты', d: 'Free $1K | Plus $10K | Cosmic ∞' },
               { i: '🔐', t: 'KYC лимит', d: '$50,000/мес' },

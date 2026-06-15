@@ -797,7 +797,7 @@ export default function JobGameScreen() {
         <div className="px-5 pt-4 pb-2 flex items-center gap-3">
           <span className="text-2xl">{selectedJob.icon}</span>
           <h1 className="font-bold flex-1">{selectedJob.name}</h1>
-          <span className="text-xs text-white/30">+◎{selectedJob.pay}</span>
+          <span className="text-xs text-white/30">+🌙{selectedJob.pay}</span>
         </div>
         <div className="flex-1 px-5 pb-8 overflow-hidden">
           {renderGame()}
@@ -823,7 +823,7 @@ export default function JobGameScreen() {
 
         {gameState === 'won' ? (
           <div className="text-center mb-8">
-            <p className="text-emerald-400 text-lg font-bold mono">+◎{selectedJob.pay} LNC</p>
+            <p className="text-emerald-400 text-lg font-bold mono">+🌙{selectedJob.pay} LNC</p>
             <p className="text-white/30 text-sm">+{selectedJob.xp} XP</p>
           </div>
         ) : (
@@ -881,7 +881,7 @@ export default function JobGameScreen() {
                 <p className="font-bold text-[15px]">{job.name}</p>
                 <p className="text-xs text-white/30 mt-0.5">{job.goal}</p>
                 <p className="text-[11px] text-white/20 mt-0.5">
-                  +◎{job.pay} · +{job.xp}XP · {job.timeLimit}с · LVL {job.level}+
+                  +🌙{job.pay} · +{job.xp}XP · {job.timeLimit}с · LVL {job.level}+
                 </p>
               </div>
               <div className="text-right">

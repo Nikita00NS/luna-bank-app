@@ -5,6 +5,7 @@ import { LNC_RATE_USD } from '../lib/constants';
 import { dbUpdateBalance, dbCreateTransaction, dbCreateEarnDeposit, dbGetEarnDeposits, dbUpdateEarnDeposit } from '../lib/db';
 import { ArrowLeftIcon, DiamondIcon } from '../components/Icons';
 import AnimatedEmoji from '../components/AnimatedEmoji';
+import LncIcon from '../components/LncIcon';
 import Modal from '../components/Modal';
 
 const PRODUCTS = [
@@ -74,7 +75,7 @@ export default function EarnScreen() {
     });
 
     addTx({ id: uid(), from_user_id: user.telegram_id, to_user_id: user.telegram_id, from_account_id: acc.id, to_account_id: 'earn', amount: val, fee: 0, currency: selProd.cur as any, type: 'deposit', status: 'completed', note: `Вклад: ${selProd.name} (${selProd.apy}% APY)`, created_at: new Date().toISOString() });
-    addNotif({ id: uid(), title: '📈 Вклад открыт', message: `${selProd.name}: ◎${val} · ${selProd.apy}% годовых`, type: 'deposit', read: false, created_at: new Date().toISOString() });
+    addNotif({ id: uid(), title: '📈 Вклад открыт', message: `${selProd.name}: 🌙{val} · ${selProd.apy}% годовых`, type: 'deposit', read: false, created_at: new Date().toISOString() });
 
     setShowConfirm(false);
     setAmount('');
@@ -95,7 +96,7 @@ export default function EarnScreen() {
     dbUpdateBalance(acc.id, total).catch(() => {});
     await dbUpdateEarnDeposit(dep.id, { status: 'done' });
 
-    addNotif({ id: uid(), title: '💰 Вклад закрыт', message: `Получено: ◎${total.toFixed(2)} (прибыль: ◎${earned.toFixed(2)})`, type: 'deposit', read: false, created_at: new Date().toISOString() });
+    addNotif({ id: uid(), title: '💰 Вклад закрыт', message: `Получено: 🌙{total.toFixed(2)} (прибыль: 🌙{earned.toFixed(2)})`, type: 'deposit', read: false, created_at: new Date().toISOString() });
     loadDeposits();
   };
 
@@ -112,7 +113,7 @@ export default function EarnScreen() {
           <AnimatedEmoji type="coin" size={36} />
           <div className="flex-1">
             <p className="text-xs text-white/35">Начислено процентов</p>
-            <p className="text-xl font-extrabold mono text-emerald-400">+◎{totalEarning.toFixed(2)}</p>
+            <p className="text-xl font-extrabold mono text-emerald-400">+🌙{totalEarning.toFixed(2)}</p>
           </div>
           <p className="text-xs text-white/20">{deposits.filter(d => d.status === 'active').length} вкладов</p>
         </div>
@@ -166,9 +167,9 @@ export default function EarnScreen() {
                       <div className="flex items-center gap-3 mb-2">
                         <span className="text-xl">{prod?.icon || '💰'}</span>
                         <div className="flex-1"><p className="font-bold text-sm">{prod?.name || d.product}</p><p className="text-[10px] text-white/25">{d.apy}% APY · {Math.floor(days)}д</p></div>
-                        <div className="text-right"><p className="font-bold mono text-sm">◎{d.amount}</p><p className="text-[10px] text-emerald-400 mono">+◎{earned.toFixed(2)}</p></div>
+                        <div className="text-right"><p className="font-bold mono text-sm"> 🌙{d.amount}</p><p className="text-[10px] text-emerald-400 mono">+🌙{earned.toFixed(2)}</p></div>
                       </div>
-                      <button onClick={() => closeDeposit(d)} className="w-full glass py-2 rounded-xl text-xs text-white/50 active:scale-95 mt-1">📤 Закрыть и забрать ◎{(d.amount + earned).toFixed(2)}</button>
+                      <button onClick={() => closeDeposit(d)} className="w-full glass py-2 rounded-xl text-xs text-white/50 active:scale-95 mt-1">📤 Закрыть и забрать 🌙{(d.amount + earned).toFixed(2)}</button>
                     </div>
                   );
                 })}
@@ -195,7 +196,7 @@ export default function EarnScreen() {
         {selProd && (
           <div className="space-y-4">
             <div className="glass p-4 rounded-xl space-y-2 text-sm">
-              {[['📦 Продукт', selProd.name], ['💰 Сумма', `◎${val} ${selProd.cur}`], ['📈 Ставка', `${selProd.apy}% годовых`], ...(selProd.minDays > 0 ? [['📅 Срок', `${selProd.minDays} дней`]] : [])].map(([l, v]) => (
+              {[['📦 Продукт', selProd.name], ['💰 Сумма', `🌙${val} ${selProd.cur}`], ['📈 Ставка', `${selProd.apy}% годовых`], ...(selProd.minDays > 0 ? [['📅 Срок', `${selProd.minDays} дней`]] : [])].map(([l, v]) => (
                 <div key={l} className="flex justify-between"><span className="text-white/35">{l}</span><span className="mono font-medium">{v}</span></div>
               ))}
             </div>

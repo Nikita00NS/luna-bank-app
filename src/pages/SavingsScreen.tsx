@@ -4,6 +4,7 @@ import { haptic, formatMoney, balanceInUsd } from '../lib/utils';
 import { dbUpdateBalance, dbCreateTransaction, dbCreateGoal, dbGetGoals, dbUpdateGoal, dbDeleteGoal } from '../lib/db';
 import { ArrowLeftIcon, PlusIcon } from '../components/Icons';
 import AnimatedEmoji from '../components/AnimatedEmoji';
+import LncIcon from '../components/LncIcon';
 import Modal from '../components/Modal';
 
 interface SavingsGoal {
@@ -131,7 +132,7 @@ export default function SavingsScreen() {
                     <span className="text-2xl">{goal.icon}</span>
                     <div className="flex-1">
                       <p className="font-bold">{goal.name}</p>
-                      <p className="text-[10px] text-white/25">◎{goal.saved.toFixed(0)} / ◎{goal.target.toFixed(0)}</p>
+                      <p className="text-[10px] text-white/25">🌙{goal.saved.toFixed(0)} / 🌙{goal.target.toFixed(0)}</p>
                     </div>
                     <p className={`font-extrabold text-lg ${done ? 'text-emerald-400' : ''}`}>{pct.toFixed(0)}%</p>
                   </div>
@@ -187,16 +188,16 @@ export default function SavingsScreen() {
       {/* Deposit Modal */}
       <Modal open={showDeposit} onClose={() => setShowDeposit(false)} title={`📥 ${selectedGoal?.name || ''}`}>
         <div className="space-y-4">
-          <p className="text-xs text-white/30">Баланс: ◎{lncAcc?.balance.toFixed(2) || 0}</p>
+          <p className="text-xs text-white/30">Баланс: 🌙{lncAcc?.balance.toFixed(2) || 0}</p>
           <input type="number" value={depositAmt} onChange={(e) => setDepositAmt(e.target.value)} placeholder="Сумма"
             className="w-full glass px-4 py-3.5 bg-transparent text-white text-xl mono outline-none text-center rounded-xl" />
           <div className="flex gap-2">
             {[10, 50, 100, 500].map((v) => (
-              <button key={v} onClick={() => setDepositAmt(String(v))} className="flex-1 glass py-2 rounded-lg text-xs mono active:scale-95">◎{v}</button>
+              <button key={v} onClick={() => setDepositAmt(String(v))} className="flex-1 glass py-2 rounded-lg text-xs mono active:scale-95">🌙{v}</button>
             ))}
           </div>
           <button onClick={depositToGoal} disabled={!depositAmt || (parseFloat(depositAmt) || 0) > (lncAcc?.balance || 0)} className="btn-primary w-full">
-            Пополнить ◎{depositAmt || 0}
+            Пополнить 🌙{depositAmt || 0}
           </button>
         </div>
       </Modal>

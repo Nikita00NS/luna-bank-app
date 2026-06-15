@@ -5,6 +5,7 @@ import { CRYPTO_PRICES, PROJECT_WALLET } from '../lib/constants';
 import { dbUpdateBalance, dbCreateTransaction, dbCreateNotification } from '../lib/db';
 import { ArrowLeftIcon, DownloadIcon } from '../components/Icons';
 import AnimatedEmoji from '../components/AnimatedEmoji';
+import LncIcon from '../components/LncIcon';
 import { useTonConnectUI } from '@tonconnect/ui-react';
 import { buildTonTransferTx, toNano } from '../lib/ton';
 import { notifyCustom } from '../lib/bot';
@@ -67,7 +68,7 @@ export default function DepositScreen() {
         currency: account.currency,
         type: 'deposit' as const,
         status: 'completed' as const,
-        note: `Депозит: ${tonAmount.toFixed(4)} TON → ◎${val} LNC`,
+        note: `Депозит: ${tonAmount.toFixed(4)} TON → 🌙{val} LNC`,
         created_at: new Date().toISOString(),
       };
       addTx(txData);
@@ -77,14 +78,14 @@ export default function DepositScreen() {
       addNotif({
         id: uid(),
         title: '📥 Депозит зачислен',
-        message: `◎${val} LNC → ${account.name}`,
+        message: `🌙${val} LNC → ${account.name}`,
         type: 'deposit',
         read: false,
         created_at: new Date().toISOString(),
       });
 
       // Bot notification
-      notifyCustom(user.telegram_id, `📥 *Депозит зачислен*\n◎${val} LNC → ${account.name}\n💎 Оплачено: ${tonAmount.toFixed(4)} TON`).catch(() => {});
+      notifyCustom(user.telegram_id, `📥 *Депозит зачислен*\n🌙{val} LNC → ${account.name}\n💎 Оплачено: ${tonAmount.toFixed(4)} TON`).catch(() => {});
 
       setStep('success');
     } catch (err: any) {
@@ -131,7 +132,7 @@ export default function DepositScreen() {
                 <div className="flex-1 text-left">
                   <p className="text-sm font-medium">{acc.name}</p>
                   <p className="text-[11px] text-white/30">
-                    ◎{acc.balance.toFixed(2)} {acc.currency} · {formatMoney(balanceInUsd(acc.balance, acc.currency), 'USD')}
+                    🌙{acc.balance.toFixed(2)} {acc.currency} · {formatMoney(balanceInUsd(acc.balance, acc.currency), 'USD')}
                   </p>
                 </div>
                 {selectedAccId === acc.id && (
@@ -163,7 +164,7 @@ export default function DepositScreen() {
                 {quickAmounts.map((a) => (
                   <button key={a} onClick={() => setAmount(String(a))}
                     className={`glass rounded-lg px-3 py-1.5 text-xs mono active:scale-95 transition-transform ${amount === String(a) ? 'ring-1 ring-white/20' : ''}`}>
-                    ◎{a}
+                    🌙{a}
                   </button>
                 ))}
               </div>
@@ -173,7 +174,7 @@ export default function DepositScreen() {
                 <div className="glass p-4 mb-5 space-y-2 rounded-2xl">
                   <div className="flex justify-between text-sm">
                     <span className="text-white/35">Получите</span>
-                    <span className="mono font-bold">◎{val.toFixed(2)} LNC</span>
+                    <span className="mono font-bold">🌙{val.toFixed(2)} LNC</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-white/35">Стоимость</span>
@@ -231,7 +232,7 @@ export default function DepositScreen() {
             </div>
 
             {[
-              ['◎ Получите', `◎${val.toFixed(2)} LNC`],
+              ['🌙 Получите', `🌙${val.toFixed(2)} LNC`],
               ['💰 Стоимость', `$${lncValueUsd.toFixed(2)}`],
               ['💎 К оплате', `${tonAmount.toFixed(4)} TON`],
               ['📍 Кошелёк', tonWallet ? shortAddr(tonWallet) : '—'],
@@ -307,7 +308,7 @@ export default function DepositScreen() {
         <div className="flex-1 flex flex-col items-center justify-center px-5 animate-fade-in">
           <AnimatedEmoji type="success" size={72} loop={false} />
           <h2 className="text-2xl font-extrabold mt-4 mb-2">Зачислено!</h2>
-          <p className="text-white/35 text-sm mb-1">◎{val} LNC → {account?.name}</p>
+          <p className="text-white/35 text-sm mb-1">🌙{val} LNC → {account?.name}</p>
           <p className="text-white/20 text-xs mb-8">Оплачено: {tonAmount.toFixed(4)} TON</p>
           <button onClick={() => go('home')} className="btn-primary w-full max-w-sm">
             На главную

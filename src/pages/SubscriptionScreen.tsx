@@ -174,10 +174,10 @@ export default function SubscriptionScreen() {
               {[
                 ['📋 Тариф', selectedPlan.name],
                 ['💰 Цена', `$${selectedPlan.price}/мес`],
-                ['◎ В Luna Coin', `◎${(selectedPlan.price / LNC_RATE_USD).toFixed(0)} LNC`],
+                ['🌙 В Luna Coin', `🌙${(selectedPlan.price / LNC_RATE_USD).toFixed(0)} LNC`],
                 ['📊 Комиссия', `${selectedPlan.commission}%`],
                 ['🎁 Кэшбэк', `${selectedPlan.cashback}%`],
-                ['💳 Баланс', personalAcc ? `◎${personalAcc.balance.toFixed(2)}` : 'Нет счёта'],
+                ['💳 Баланс', personalAcc ? `🌙${personalAcc.balance.toFixed(2)}` : 'Нет счёта'],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between text-sm py-0.5">
                   <span className="text-white/35">{label}</span>
@@ -196,7 +196,7 @@ export default function SubscriptionScreen() {
             {/* After purchase info */}
             {personalAcc && personalAcc.balance >= selectedPlan.price / LNC_RATE_USD && (
               <div className="text-[10px] text-white/20 text-center">
-                Остаток после покупки: ◎{(personalAcc.balance - selectedPlan.price / LNC_RATE_USD).toFixed(2)} LNC
+                Остаток после покупки: 🌙{(personalAcc.balance - selectedPlan.price / LNC_RATE_USD).toFixed(2)} LNC
               </div>
             )}
 
@@ -205,7 +205,7 @@ export default function SubscriptionScreen() {
               disabled={!personalAcc || personalAcc.balance < selectedPlan.price / LNC_RATE_USD}
               className="btn-primary w-full"
             >
-              ✅ Оплатить ◎{(selectedPlan.price / LNC_RATE_USD).toFixed(0)} LNC
+              ✅ Оплатить 🌙{(selectedPlan.price / LNC_RATE_USD).toFixed(0)} LNC
             </button>
             <button
               onClick={() => setShowConfirm(false)}

@@ -59,8 +59,8 @@ export default function EscrowScreen() {
     await dbCreateEscrow(deal);
 
     addTx({ id: uid(), from_user_id: user.telegram_id, to_user_id: 0, from_account_id: lncAcc.id, to_account_id: 'escrow', amount: total, fee, currency: 'LNC', type: 'withdrawal', status: 'completed', note: `Гарант: ${title}`, created_at: new Date().toISOString() });
-    addNotif({ id: uid(), title: '🛡️ Гарант-сделка', message: `◎${val} → @${seller}`, type: 'system', read: false, created_at: new Date().toISOString() });
-    notifyCustom(user.telegram_id, `🛡️ *Гарант-сделка создана*\n${title}: ◎${val} LNC\nПродавец: @${seller}`).catch(() => {});
+    addNotif({ id: uid(), title: '🛡️ Гарант-сделка', message: `🌙${val} → @${seller}`, type: 'system', read: false, created_at: new Date().toISOString() });
+    notifyCustom(user.telegram_id, `🛡️ *Гарант-сделка создана*\n${title}: 🌙{val} LNC\nПродавец: @${seller}`).catch(() => {});
 
     setStep('success');
     loadDeals();
@@ -120,9 +120,9 @@ export default function EscrowScreen() {
             <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Описание (необязательно)" className="w-full glass px-4 py-3 bg-transparent text-white outline-none rounded-xl resize-none h-20" />
             <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Сумма (LNC)" className="w-full glass px-4 py-3 bg-transparent text-white mono outline-none rounded-xl text-center text-xl" />
             {val > 0 && <div className="glass p-3 rounded-xl space-y-1 text-sm">
-              <div className="flex justify-between"><span className="text-white/35">Сумма</span><span className="mono">◎{val}</span></div>
-              <div className="flex justify-between"><span className="text-white/35">Комиссия 2%</span><span className="mono">◎{fee}</span></div>
-              <div className="flex justify-between font-bold border-t border-white/[0.04] pt-1"><span>Итого</span><span className="mono">◎{total}</span></div>
+              <div className="flex justify-between"><span className="text-white/35">Сумма</span><span className="mono">🌙{val}</span></div>
+              <div className="flex justify-between"><span className="text-white/35">Комиссия 2%</span><span className="mono">🌙{fee}</span></div>
+              <div className="flex justify-between font-bold border-t border-white/[0.04] pt-1"><span>Итого</span><span className="mono">🌙{total}</span></div>
             </div>}
             <button onClick={goConfirm} disabled={!title || !seller || val <= 0 || balance < total} className="btn-primary w-full">Продолжить →</button>
           </div>
@@ -132,7 +132,7 @@ export default function EscrowScreen() {
           <div className="animate-fade-in">
             <div className="glass p-5 space-y-3 rounded-2xl mb-6">
               <div className="text-center mb-3"><AnimatedEmoji type="lock" size={40} /><h3 className="font-bold text-lg mt-2">Подтверждение</h3></div>
-              {[['🏷 Сделка', title], ['👤 Продавец', `@${seller}`], ['💰 Сумма', `◎${val}`], ['📊 Комиссия', `◎${fee}`], ['📋 Итого', `◎${total}`]].map(([l, v]) => (
+              {[['🏷 Сделка', title], ['👤 Продавец', `@${seller}`], ['💰 Сумма', `🌙${val}`], ['📊 Комиссия', `🌙${fee}`], ['📋 Итого', `🌙${total}`]].map(([l, v]) => (
                 <div key={l} className="flex justify-between py-1.5 border-b border-white/[0.04] last:border-0 last:font-bold"><span className="text-white/35 text-sm">{l}</span><span className="text-sm mono">{v}</span></div>
               ))}
             </div>
@@ -145,7 +145,7 @@ export default function EscrowScreen() {
           <div className="text-center py-10 animate-fade-in">
             <AnimatedEmoji type="success" size={64} loop={false} />
             <h3 className="font-bold text-lg mt-4">Сделка создана!</h3>
-            <p className="text-white/35 text-sm mt-1">◎{val} заморожено</p>
+            <p className="text-white/35 text-sm mt-1">🌙{val} заморожено</p>
             <button onClick={() => { setStep('form'); setTitle(''); setDesc(''); setAmount(''); setSeller(''); setTab('deals'); }} className="btn-primary mt-6 px-8">К сделкам</button>
           </div>
         )}
@@ -164,7 +164,7 @@ export default function EscrowScreen() {
                     <span className={`text-[10px] px-2 py-0.5 rounded-lg ${st.color}`}>{st.label}</span>
                   </div>
                   <div className="flex justify-between text-xs text-white/30 mb-2">
-                    <span>◎{d.amount} LNC</span><span>Комиссия: ◎{d.fee}</span>
+                    <span>🌙{d.amount} LNC</span><span>Комиссия: 🌙{d.fee}</span>
                   </div>
                   {d.status === 'funded' && (
                     <div className="flex gap-2">

@@ -94,10 +94,10 @@ export default function MarketplaceScreen() {
     const txData = { id: uid(), from_user_id: user.telegram_id, to_user_id: selectedItem.seller_id, from_account_id: lncAcc.id, to_account_id: 'marketplace', amount: selectedItem.price, fee: 0, currency: 'LNC' as const, type: 'transfer' as const, status: 'completed' as const, note: `Покупка: ${selectedItem.title}`, created_at: new Date().toISOString() };
     addTx(txData);
     dbCreateTransaction(txData).catch(() => {});
-    addNotif({ id: uid(), title: '🛒 Покупка', message: `${selectedItem.title} — ◎${selectedItem.price}`, type: 'transfer', read: false, created_at: new Date().toISOString() });
+    addNotif({ id: uid(), title: '🛒 Покупка', message: `${selectedItem.title} — 🌙${selectedItem.price}`, type: 'transfer', read: false, created_at: new Date().toISOString() });
 
     await dbUpdateListing(selectedItem.id, { status: 'sold', buyer_id: user.telegram_id });
-    notifyCustom(selectedItem.seller_id, `🛒 *Ваш товар куплен!*\n${selectedItem.title}: ◎${selectedItem.price} LNC`).catch(() => {});
+    notifyCustom(selectedItem.seller_id, `🛒 *Ваш товар куплен!*\n${selectedItem.title}: 🌙${selectedItem.price} LNC`).catch(() => {});
 
     setShowBuy(false);
     loadListings();
@@ -147,7 +147,7 @@ export default function MarketplaceScreen() {
                   <p className="font-bold text-sm truncate">{item.title}</p>
                   <p className="text-[10px] text-white/25 truncate">{item.description || '—'}</p>
                   <div className="flex justify-between items-center mt-2">
-                    <p className="font-extrabold text-sm text-yellow-400">◎{item.price}</p>
+                    <p className="font-extrabold text-sm text-yellow-400">🌙{item.price}</p>
                     {isMine && <span className="text-[8px] text-white/20 bg-white/5 px-1.5 py-0.5 rounded">Ваш</span>}
                   </div>
                 </button>
@@ -189,14 +189,14 @@ export default function MarketplaceScreen() {
             </div>
             <div className="glass p-3 rounded-xl space-y-1.5">
               <div className="flex justify-between text-sm"><span className="text-white/35">Продавец</span><span>@{selectedItem.seller_username}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-white/35">Цена</span><span className="font-bold text-yellow-400">◎{selectedItem.price} LNC</span></div>
-              <div className="flex justify-between text-sm"><span className="text-white/35">Баланс</span><span>◎{lncAcc?.balance.toFixed(2) || 0}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-white/35">Цена</span><span className="font-bold text-yellow-400">🌙{selectedItem.price} LNC</span></div>
+              <div className="flex justify-between text-sm"><span className="text-white/35">Баланс</span><span>🌙{lncAcc?.balance.toFixed(2) || 0}</span></div>
             </div>
             {lncAcc && lncAcc.balance < selectedItem.price && (
               <p className="text-red-400 text-xs text-center">Недостаточно средств</p>
             )}
             <button onClick={buyItem} disabled={!lncAcc || lncAcc.balance < selectedItem.price} className="btn-primary w-full">
-              ✅ Купить за ◎{selectedItem.price}
+              ✅ Купить за 🌙{selectedItem.price}
             </button>
           </div>
         )}

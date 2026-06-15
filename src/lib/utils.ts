@@ -38,7 +38,7 @@ export function formatCrypto(amount: number, currency: string): string {
     ETH: ['Ξ', 6],
     TON: ['💎 ', 4],
     USDT: ['$', 2],
-    LNC: ['◎', 2],
+    LNC: ['🌙', 2],
   };
   const [sym, dec] = map[currency] || ['', 2];
   return `${sym}${amount.toFixed(dec)}`;

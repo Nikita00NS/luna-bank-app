@@ -4,6 +4,7 @@ import { haptic } from '../lib/utils';
 import { dbUpdateBalance, dbCreateTransaction } from '../lib/db';
 import { ArrowLeftIcon, ReceiptIcon } from '../components/Icons';
 import AnimatedEmoji from '../components/AnimatedEmoji';
+import LncIcon from '../components/LncIcon';
 import { notifyCustom } from '../lib/bot';
 
 const CATS = [
@@ -49,8 +50,8 @@ export default function PaymentsScreen() {
     const txData = { id: uid(), from_user_id: user.telegram_id, to_user_id: 0, from_account_id: lncAcc.id, to_account_id: 'payment', amount: val, fee: 0, currency: 'LNC' as const, type: 'withdrawal' as const, status: 'completed' as const, note: `Оплата: ${selSvc.n} (${account})`, created_at: new Date().toISOString() };
     addTx(txData);
     dbCreateTransaction(txData).catch(() => {});
-    addNotif({ id: uid(), title: '✅ Оплачено', message: `${selSvc.n}: ◎${val}`, type: 'system', read: false, created_at: new Date().toISOString() });
-    notifyCustom(user.telegram_id, `✅ *Оплата выполнена*\n${selSvc.n}: ◎${val} LNC\nСчёт: ${account}`).catch(() => {});
+    addNotif({ id: uid(), title: '✅ Оплачено', message: `${selSvc.n}: 🌙${val}`, type: 'system', read: false, created_at: new Date().toISOString() });
+    notifyCustom(user.telegram_id, `✅ *Оплата выполнена*\n${selSvc.n}: 🌙${val} LNC\nСчёт: ${account}`).catch(() => {});
     setStep('success');
   };
 
@@ -84,7 +85,7 @@ export default function PaymentsScreen() {
           <div className="space-y-4">
             <div><p className="text-xs text-white/35 mb-1.5">Номер / лицевой счёт</p><input type="text" value={account} onChange={e => setAccount(e.target.value)} placeholder="Введите номер" className="w-full glass px-4 py-3.5 bg-transparent text-white outline-none rounded-xl" /></div>
             <div><p className="text-xs text-white/35 mb-1.5">Сумма (LNC)</p><input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" className="w-full glass px-4 py-4 bg-transparent text-white text-2xl font-extrabold mono outline-none text-center rounded-xl" />
-              <div className="flex gap-2 mt-2">{[100, 200, 500, 1000].map(v => <button key={v} onClick={() => setAmount(String(v))} className={`flex-1 glass rounded-lg py-1.5 text-xs mono active:scale-95 ${amount === String(v) ? 'ring-1 ring-white/20' : ''}`}>◎{v}</button>)}</div></div>
+              <div className="flex gap-2 mt-2">{[100, 200, 500, 1000].map(v => <button key={v} onClick={() => setAmount(String(v))} className={`flex-1 glass rounded-lg py-1.5 text-xs mono active:scale-95 ${amount === String(v) ? 'ring-1 ring-white/20' : ''}`}>🌙{v}</button>)}</div></div>
           </div>
           <button onClick={confirmPay} disabled={val <= 0 || val > balance || !account} className="btn-primary w-full mt-6">
             Продолжить →
@@ -102,8 +103,8 @@ export default function PaymentsScreen() {
                 [`${selSvc.i} Услуга`, selSvc.n],
                 ['📁 Категория', selCat?.name || ''],
                 ['📝 Счёт/номер', account],
-                ['💰 Сумма', `◎${val.toFixed(2)} LNC`],
-                ['💳 Со счёта', lncAcc ? `◎${lncAcc.balance.toFixed(2)}` : '—'],
+                ['💰 Сумма', `🌙${val.toFixed(2)} LNC`],
+                ['💳 Со счёта', lncAcc ? `🌙${lncAcc.balance.toFixed(2)}` : '—'],
               ].map(([l, v]) => (
                 <div key={l} className="flex justify-between py-1.5 border-b border-white/[0.04] last:border-0 last:font-bold">
                   <span className="text-white/35 text-sm">{l}</span>
@@ -111,7 +112,7 @@ export default function PaymentsScreen() {
                 </div>
               ))}
             </div>
-            <button onClick={executePay} className="btn-primary w-full">✅ Оплатить ◎{val.toFixed(2)}</button>
+            <button onClick={executePay} className="btn-primary w-full">✅ Оплатить 🌙{val.toFixed(2)}</button>
             <button onClick={() => setStep('pay')} className="btn-ghost w-full mt-2">← Изменить</button>
           </div>
         )}
@@ -119,7 +120,7 @@ export default function PaymentsScreen() {
         {step === 'success' && <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
           <AnimatedEmoji type="success" size={72} loop={false} />
           <h2 className="text-xl font-extrabold mt-4 mb-2">Оплачено!</h2>
-          <p className="text-white/35 text-sm mb-6">{selSvc?.n} · ◎{amount}</p>
+          <p className="text-white/35 text-sm mb-6">{selSvc?.n} · 🌙{amount}</p>
           <button onClick={() => { setStep('cats'); setAmount(''); setAccount(''); }} className="btn-primary px-8">Новый платёж</button>
           <button onClick={() => go('home')} className="btn-ghost mt-2">На главную</button>
         </div>}

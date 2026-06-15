@@ -45,9 +45,9 @@ export default function GamesScreen() {
             </div>
           </div>
         </div>
-        {result !== null && !spinning && <p className={`text-2xl font-extrabold mb-4 animate-scale-in ${result > 0 ? 'text-emerald-400' : 'text-red-400'}`}>{result > 0 ? `+◎${result}` : 'Мимо!'}</p>}
+        {result !== null && !spinning && <p className={`text-2xl font-extrabold mb-4 animate-scale-in ${result > 0 ? 'text-emerald-400' : 'text-red-400'}`}>{result > 0 ? `+🌙{result}` : 'Мимо!'}</p>}
         <button onClick={spin} disabled={spinning || balance < cost} className="btn-primary w-full max-w-xs mx-auto">
-          {spinning ? '🎰 Крутим...' : `🎰 Крутить (◎${cost})`}
+          {spinning ? '🎰 Крутим...' : `🎰 Крутить (🌙{cost})`}
         </button>
       </div>
     );
@@ -80,14 +80,14 @@ export default function GamesScreen() {
         <div className={`glass p-8 mb-4 ${state === 'crash' ? 'border border-red-500/30' : state === 'cash' ? 'border border-emerald-500/30' : ''}`}>
           <p className={`text-6xl font-black mono ${state === 'crash' ? 'text-red-400' : state === 'cash' ? 'text-emerald-400' : mult >= 2 ? 'text-emerald-400' : 'text-white'}`}>{mult.toFixed(2)}x</p>
           {state === 'crash' && <p className="text-red-400 text-sm mt-2 font-bold">💥 CRASH!</p>}
-          {state === 'cash' && <p className="text-emerald-400 text-sm mt-2 font-bold">💰 +◎{(b * mult - b).toFixed(2)}</p>}
+          {state === 'cash' && <p className="text-emerald-400 text-sm mt-2 font-bold">💰 +🌙{(b * mult - b).toFixed(2)}</p>}
         </div>
         {state === 'idle' && <>
           <input type="number" value={bet} onChange={e => setBet(e.target.value)} placeholder="Ставка" className="w-full glass px-4 py-3 bg-transparent text-white text-xl font-bold mono outline-none text-center mb-3" />
-          <div className="flex gap-2 mb-4">{[10, 50, 100, 500].map(v => <button key={v} onClick={() => setBet(String(v))} className="flex-1 glass rounded-lg py-2 text-xs mono active:scale-95 transition-transform">◎{v}</button>)}</div>
+          <div className="flex gap-2 mb-4">{[10, 50, 100, 500].map(v => <button key={v} onClick={() => setBet(String(v))} className="flex-1 glass rounded-lg py-2 text-xs mono active:scale-95 transition-transform">🌙{v}</button>)}</div>
           <button onClick={start} disabled={b <= 0 || b > balance} className="btn-primary w-full">🚀 Старт</button>
         </>}
-        {state === 'run' && <button onClick={cashOut} className="w-full py-5 rounded-2xl bg-emerald-500 text-white font-extrabold text-xl active:scale-[0.97] transition-transform animate-pulse">💰 Забрать ◎{(b * mult).toFixed(2)}</button>}
+        {state === 'run' && <button onClick={cashOut} className="w-full py-5 rounded-2xl bg-emerald-500 text-white font-extrabold text-xl active:scale-[0.97] transition-transform animate-pulse">💰 Забрать 🌙{(b * mult).toFixed(2)}</button>}
         {(state === 'crash' || state === 'cash') && <button onClick={() => { setState('idle'); setMult(1.0); }} className="btn-primary w-full mt-2">🔄 Снова</button>}
       </div>
     );
@@ -117,7 +117,7 @@ export default function GamesScreen() {
         <div className={`w-28 h-28 rounded-full mx-auto flex items-center justify-center text-5xl mb-6 shadow-2xl ${flipping ? 'animate-spin' : ''} ${result === 'h' ? 'bg-gradient-to-br from-yellow-400 to-amber-500' : result === 't' ? 'bg-gradient-to-br from-gray-400 to-gray-500' : 'bg-gradient-to-br from-yellow-400/50 to-amber-500/50'}`}>
           {result ? (result === 'h' ? '🌙' : '⭐') : '🪙'}
         </div>
-        {won !== null && <p className={`text-2xl font-extrabold mb-4 animate-scale-in ${won ? 'text-emerald-400' : 'text-red-400'}`}>{won ? `+◎${(b * 0.95).toFixed(2)}` : `-◎${bet}`}</p>}
+        {won !== null && <p className={`text-2xl font-extrabold mb-4 animate-scale-in ${won ? 'text-emerald-400' : 'text-red-400'}`}>{won ? `+🌙{(b * 0.95).toFixed(2)}` : `-🌙{bet}`}</p>}
         <div className="flex gap-3 max-w-xs mx-auto mb-4">
           <button onClick={() => setSide('h')} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${side === 'h' ? 'bg-yellow-500 text-black' : 'glass text-white/50'}`}>🌙 Луна</button>
           <button onClick={() => setSide('t')} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${side === 't' ? 'bg-gray-400 text-black' : 'glass text-white/50'}`}>⭐ Звезда</button>
@@ -129,7 +129,7 @@ export default function GamesScreen() {
   }
 
   const games = [
-    { id: 'spin' as const, icon: '🎰', name: 'Lucky Spin', desc: 'До ◎5000', color: 'from-purple-500/20 to-pink-500/10' },
+    { id: 'spin' as const, icon: '🎰', name: 'Lucky Spin', desc: 'До 🌙5000', color: 'from-purple-500/20 to-pink-500/10' },
     { id: 'crash' as const, icon: '🚀', name: 'Crash', desc: 'Успей забрать!', color: 'from-emerald-500/20 to-cyan-500/10' },
     { id: 'coin' as const, icon: '🪙', name: 'Монетка', desc: 'x1.95', color: 'from-yellow-500/20 to-amber-500/10' },
   ];
@@ -139,7 +139,7 @@ export default function GamesScreen() {
       <div className="px-5 pt-4 pb-2 flex items-center gap-4">
         <button onClick={() => game === 'menu' ? go('city') : setGame('menu')} className="text-white/50"><ArrowLeftIcon size={20} /></button>
         <h1 className="font-bold flex-1">Мини-игры</h1>
-        <div className="glass rounded-full px-3 py-1 text-xs font-bold mono">◎{balance.toFixed(0)}</div>
+        <div className="glass rounded-full px-3 py-1 text-xs font-bold mono">🌙{balance.toFixed(0)}</div>
       </div>
       <div className="flex-1 overflow-y-auto px-5 pb-24">
         {game === 'menu' && <div className="space-y-3 mt-2 animate-fade-in">

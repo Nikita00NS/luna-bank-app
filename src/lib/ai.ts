@@ -83,7 +83,7 @@ function fallbackResponse(msg: string): string {
   if (lower.includes('счёт') || lower.includes('открыть'))
     return '🏦 Откройте счёт: Счета → + Открыть → выберите тип → заполните данные → подпишите договор электронной подписью.';
   if (lower.includes('lnc') || lower.includes('луна'))
-    return '◎ Luna Coin (LNC) — валюта Luna Bank. 1 LNC = $0.05. Для переводов, подписок, покупок внутри экосистемы.';
+    return '🌙 Luna Coin (LNC) — валюта Luna Bank. 1 LNC = $0.05. Для переводов, подписок, покупок внутри экосистемы.';
   if (lower.includes('ton') || lower.includes('кошел'))
     return '🔗 Подключите TON-кошелёк: Профиль → TON-кошелёк → выберите Tonkeeper или другой → подтвердите. Авто-создание счетов TON/USDT/BTC/ETH.';
   if (lower.includes('привет') || lower.includes('здравствуй'))

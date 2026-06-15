@@ -105,7 +105,7 @@ const EMOJIS = {
           </defs>
           <circle cx="40" cy="40" r="30" fill="url(#coinGrad)" />
           <circle cx="40" cy="40" r="25" fill="none" stroke="#f59e0b" strokeWidth="2" />
-          <text x="40" y="48" textAnchor="middle" fill="#92400e" fontSize="28" fontWeight="bold">◎</text>
+          <text x="40" y="48" textAnchor="middle" fill="#92400e" fontSize="28" fontWeight="bold">🌙</text>
         </svg>
       </div>
     ),

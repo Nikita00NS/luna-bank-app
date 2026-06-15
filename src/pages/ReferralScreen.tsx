@@ -73,7 +73,7 @@ export default function ReferralScreen() {
             Приглашай друзей
           </h2>
           <p className="text-white/40 text-sm mt-2 max-w-[250px] mx-auto">
-            Получай <span className="text-yellow-400 font-bold">◎{REFERRAL_REWARD} LNC</span> за каждого друга, который зарегистрируется по вашей ссылке
+            Получай <span className="text-yellow-400 font-bold">🌙{REFERRAL_REWARD} LNC</span> за каждого друга, который зарегистрируется по вашей ссылке
           </p>
         </div>
       </div>
@@ -85,7 +85,7 @@ export default function ReferralScreen() {
           <p className="text-[10px] text-white/30 uppercase tracking-wide mt-1">Приглашений</p>
         </div>
         <div className="flex-1 glass p-4 rounded-2xl text-center">
-          <p className="text-3xl font-extrabold text-yellow-400">◎{totalEarned}</p>
+          <p className="text-3xl font-extrabold text-yellow-400">🌙{totalEarned}</p>
           <p className="text-[10px] text-white/30 uppercase tracking-wide mt-1">Заработано LNC</p>
         </div>
       </div>
@@ -123,7 +123,7 @@ export default function ReferralScreen() {
           {[
             { step: '1', icon: '📤', text: 'Отправьте ссылку другу' },
             { step: '2', icon: '📱', text: 'Друг открывает Luna Bank и регистрируется' },
-            { step: '3', icon: '🎁', text: `Вы оба получаете ◎${REFERRAL_REWARD} LNC` },
+            { step: '3', icon: '🎁', text: `Вы оба получаете 🌙${REFERRAL_REWARD} LNC` },
           ].map((item) => (
             <div key={item.step} className="glass p-3 flex items-center gap-3 rounded-xl">
               <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center text-xs font-bold">
@@ -150,7 +150,7 @@ export default function ReferralScreen() {
                   <p className="text-sm font-medium">{ref.referred?.first_name || 'User'}</p>
                   <p className="text-[10px] text-white/25">@{ref.referred?.username || '—'}</p>
                 </div>
-                <span className="text-xs text-yellow-400/70 font-bold mono">+◎{ref.reward || REFERRAL_REWARD}</span>
+                <span className="text-xs text-yellow-400/70 font-bold mono">+🌙{ref.reward || REFERRAL_REWARD}</span>
               </div>
             ))}
           </div>

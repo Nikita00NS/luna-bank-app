@@ -12,6 +12,7 @@ import {
 } from '../lib/db';
 import { ArrowLeftIcon, SearchIcon, PhoneIcon, GlobeIcon, UserIcon } from '../components/Icons';
 import AnimatedEmoji from '../components/AnimatedEmoji';
+import LncIcon from '../components/LncIcon';
 import { requestContact, formatPhone, normalizePhone, showAlert } from '../lib/telegram';
 import { notifyTransferReceived, notifyTransferSent } from '../lib/bot';
 
@@ -158,7 +159,7 @@ export default function TransferScreen() {
     const notifData = {
       id: uid(),
       title: '✅ Перевод выполнен',
-      message: `◎${parsedAmount} → @${recipient.username}`,
+      message: `🌙${parsedAmount} → @${recipient.username}`,
       type: 'transfer' as const,
       read: false,
       created_at: new Date().toISOString(),
@@ -508,7 +509,7 @@ export default function TransferScreen() {
                       balanceInUsd(acc.balance, acc.currency),
                       'USD'
                     )}{' '}
-                    · ◎{acc.balance.toFixed(2)}
+                    · 🌙{acc.balance.toFixed(2)}
                   </p>
                 </div>
                 {fromAccountId === acc.id && (
@@ -543,7 +544,7 @@ export default function TransferScreen() {
                   amount === String(a) ? 'ring-1 ring-white/20 bg-white/[0.06]' : ''
                 }`}
               >
-                ◎{a}
+                <LncIcon size={12} />{a}
               </button>
             ))}
           </div>
@@ -562,25 +563,25 @@ export default function TransferScreen() {
             <div className="glass p-4 mb-5 space-y-2 rounded-2xl">
               <div className="flex justify-between text-sm">
                 <span className="text-white/35">Сумма</span>
-                <span className="mono">◎{parsedAmount.toFixed(2)}</span>
+                <span className="mono">🌙{parsedAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-white/35">
                   Комиссия (
                   {SUBSCRIPTION_PLANS.find((p) => p.id === user.subscription)?.commission}%)
                 </span>
-                <span className="mono text-white/50">◎{commission.toFixed(2)}</span>
+                <span className="mono text-white/50">🌙{commission.toFixed(2)}</span>
               </div>
               <div className="h-px bg-white/[0.06]" />
               <div className="flex justify-between text-sm font-bold">
                 <span>Итого к списанию</span>
-                <span className="mono">◎{total.toFixed(2)}</span>
+                <span className="mono">🌙{total.toFixed(2)}</span>
               </div>
               {fromAccount && (
                 <div className="flex justify-between text-[11px]">
                   <span className="text-white/20">Остаток после перевода</span>
                   <span className="mono text-white/25">
-                    ◎{Math.max(0, fromAccount.balance - total).toFixed(2)}
+                    🌙{Math.max(0, fromAccount.balance - total).toFixed(2)}
                   </span>
                 </div>
               )}
@@ -612,10 +613,10 @@ export default function TransferScreen() {
               ['👤 Получатель', `${recipient.first_name} ${recipient.last_name}`],
               ['📎 Username', `@${recipient.username}`],
               ['💳 Со счёта', fromAccount.name],
-              ['💰 Сумма', `◎${parsedAmount.toFixed(2)}`],
-              ['📊 Комиссия', `◎${commission.toFixed(2)}`],
+              ['💰 Сумма', `🌙${parsedAmount.toFixed(2)}`],
+              ['📊 Комиссия', `🌙${commission.toFixed(2)}`],
               ...(note ? [['💬 Сообщение', note]] : []),
-              ['📋 Итого', `◎${total.toFixed(2)}`],
+              ['📋 Итого', `🌙${total.toFixed(2)}`],
             ].map(([label, value]) => (
               <div
                 key={label}
@@ -651,7 +652,7 @@ export default function TransferScreen() {
 
           <h2 className="text-2xl font-extrabold mb-2">Перевод выполнен!</h2>
           <p className="text-white/40 text-sm mb-1">
-            ◎{parsedAmount.toFixed(2)} → @{recipient.username}
+            🌙{parsedAmount.toFixed(2)} → @{recipient.username}
           </p>
           <p className="text-white/25 text-xs mb-1">
             {recipient.first_name} {recipient.last_name}

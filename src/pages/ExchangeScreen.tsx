@@ -5,6 +5,7 @@ import { CRYPTO_PRICES } from '../lib/constants';
 import { dbUpdateBalance, dbCreateTransaction } from '../lib/db';
 import { ArrowLeftIcon, ChartIcon, TrendingUpIcon } from '../components/Icons';
 import AnimatedEmoji from '../components/AnimatedEmoji';
+import LncIcon from '../components/LncIcon';
 
 const COINS = [
   { sym: 'TON', name: 'Toncoin', price: CRYPTO_PRICES.TON, change: 5.2 },
@@ -184,11 +185,11 @@ export default function ExchangeScreen() {
                       <div className="glass p-3 mb-4 space-y-2 rounded-xl">
                         <div className="flex justify-between text-sm">
                           <span className="text-white/35">Курс</span>
-                          <span className="mono">1 {selCoin.sym} = ◎{(price / lncPrice).toFixed(2)} LNC</span>
+                          <span className="mono">1 {selCoin.sym} = 🌙{(price / lncPrice).toFixed(2)} LNC</span>
                         </div>
                         <div className="flex justify-between text-sm font-bold">
                           <span className="text-white/50">{side === 'buy' ? 'К оплате' : 'Получите'}</span>
-                          <span className="mono">◎{totalLNC.toFixed(2)} LNC</span>
+                          <span className="mono">🌙{totalLNC.toFixed(2)} LNC</span>
                         </div>
                       </div>
                     )}
@@ -218,7 +219,7 @@ export default function ExchangeScreen() {
                         {o.side === 'buy' ? '↑' : '↓'}
                       </div>
                       <div className="flex-1"><p className="font-bold text-sm">{o.side === 'buy' ? 'Покупка' : 'Продажа'} {o.coin}</p><p className="text-[11px] text-white/25">{new Date(o.time).toLocaleString('ru-RU')}</p></div>
-                      <div className="text-right"><p className="font-bold mono text-sm">{o.amount.toFixed(4)} {o.coin}</p><p className="text-[11px] text-white/25 mono">◎{o.total.toFixed(2)}</p></div>
+                      <div className="text-right"><p className="font-bold mono text-sm">{o.amount.toFixed(4)} {o.coin}</p><p className="text-[11px] text-white/25 mono">🌙{o.total.toFixed(2)}</p></div>
                     </div>
                   ))}</div>
                 )}
@@ -243,7 +244,7 @@ export default function ExchangeScreen() {
               ['📈 Курс', `$${selCoin.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}`],
               ['🔢 Количество', `${val.toFixed(4)} ${selCoin.sym}`],
               ['💎 Стоимость', `≈ $${(val * price).toFixed(2)}`],
-              [side === 'buy' ? '🔻 Списать' : '🔺 Получить', `◎${totalLNC.toFixed(2)} LNC`],
+              [side === 'buy' ? '🔻 Списать' : '🔺 Получить', `🌙${totalLNC.toFixed(2)} LNC`],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between py-2 border-b border-white/[0.04] last:border-0 last:font-bold">
                 <span className="text-white/35 text-sm">{label}</span>
@@ -275,7 +276,7 @@ export default function ExchangeScreen() {
             {side === 'buy' ? 'Куплено' : 'Продано'} {val.toFixed(4)} {selCoin.sym}
           </p>
           <p className="text-white/25 text-xs mb-1">
-            за ◎{totalLNC.toFixed(2)} LNC
+            за 🌙{totalLNC.toFixed(2)} LNC
           </p>
           <p className="text-[10px] text-white/15 mono mb-8">ID: {lastOrderId}</p>
 

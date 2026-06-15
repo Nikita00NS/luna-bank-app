@@ -78,7 +78,7 @@ export default function SocialScreen() {
     updateBalance(lncAcc.id, -amt);
     dbUpdateBalance(lncAcc.id, -amt).catch(() => {});
     addTx({ id: uid(), from_user_id: user.telegram_id, to_user_id: tipUser.telegram_id, from_account_id: lncAcc.id, to_account_id: 'tip', amount: amt, fee: 0, currency: 'LNC', type: 'transfer', status: 'completed', note: `Чаевые @${tipUser.username}`, created_at: new Date().toISOString() });
-    addNotif({ id: uid(), title: '☕ Чаевые', message: `◎${amt} → @${tipUser.username}`, type: 'transfer', read: false, created_at: new Date().toISOString() });
+    addNotif({ id: uid(), title: '☕ Чаевые', message: `🌙${amt} → @${tipUser.username}`, type: 'transfer', read: false, created_at: new Date().toISOString() });
     setShowTip(false);
   };
 
@@ -122,7 +122,7 @@ export default function SocialScreen() {
                     <p className="text-[11px] text-white/25">{timeAgo(tx.created_at)}</p>
                   </div>
                   <p className={`font-bold mono text-sm ${tx.from_user_id === user.telegram_id ? 'text-red-400' : 'text-emerald-400'}`}>
-                    {tx.from_user_id === user.telegram_id ? '-' : '+'}◎{tx.amount}
+                    {tx.from_user_id === user.telegram_id ? '-' : '+'}🌙{tx.amount}
                   </p>
                 </div>
               ))
@@ -217,12 +217,12 @@ export default function SocialScreen() {
               <button key={v} onClick={() => setTipAmt(String(v))}
                 className={`flex-1 glass rounded-lg py-2 text-xs mono active:scale-95 transition-transform ${
                   tipAmt === String(v) ? 'ring-1 ring-white/20' : ''
-                }`}>◎{v}</button>
+                }`}>🌙{v}</button>
             ))}
           </div>
           <button onClick={sendTip} disabled={(parseFloat(tipAmt) || 0) > balance}
             className="btn-primary w-full">
-            Отправить ☕ ◎{tipAmt}
+            Отправить ☕ 🌙{tipAmt}
           </button>
         </div>
       </Modal>

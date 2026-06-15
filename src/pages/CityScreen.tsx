@@ -236,7 +236,7 @@ export default function CityScreen() {
                     <div className="flex-1">
                       <p className="font-bold">{job.name}</p>
                       <p className="text-xs text-white/30">
-                        +◎{job.pay} · +{job.xp} XP · LVL {job.level}+
+                        +🌙{job.pay} · +{job.xp} XP · LVL {job.level}+
                       </p>
                     </div>
                     <button
@@ -280,7 +280,7 @@ export default function CityScreen() {
                       <span className="text-2xl">{bizData?.icon || '🏪'}</span>
                       <div className="flex-1">
                         <p className="font-bold">{biz.name}</p>
-                        <p className="text-xs text-white/30">◎{biz.income}/сбор</p>
+                        <p className="text-xs text-white/30">🌙{biz.income}/сбор</p>
                       </div>
                       <button
                         onClick={() => collectIncome(biz)}
@@ -312,7 +312,7 @@ export default function CityScreen() {
                     <div className="flex-1">
                       <p className="font-bold">{biz.name}</p>
                       <p className="text-xs text-white/30">
-                        ◎{biz.cost} · ◎{biz.income}/сбор · LVL {biz.level}+
+                        🌙{biz.cost} · 🌙{biz.income}/сбор · LVL {biz.level}+
                       </p>
                     </div>
                     <button

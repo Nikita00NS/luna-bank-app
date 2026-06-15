@@ -18,7 +18,7 @@ interface Story {
 const STORIES: Story[] = [
   { id: '1', title: '🚀 Luna Bank v1.3', content: 'Новое обновление!\n\n✅ Реальный TON баланс\n✅ Биометрия\n✅ Бот-уведомления\n✅ Рефералы', bg: 'from-violet-600 to-purple-900', emoji: '🚀', cta: 'Попробовать', ctaPage: 'home' },
   { id: '2', title: '💎 TON Connect', content: 'Подключите кошелёк и отправляйте реальные TON прямо из приложения!', bg: 'from-blue-600 to-cyan-900', emoji: '💎', cta: 'Подключить', ctaPage: 'ton-connect' },
-  { id: '3', title: '👥 Приглашай друзей', content: 'Получай ◎50 LNC за каждого друга!\n\nДелись реферальной ссылкой и зарабатывай.', bg: 'from-emerald-600 to-teal-900', emoji: '🎁', cta: 'Пригласить', ctaPage: 'referral' },
+  { id: '3', title: '👥 Приглашай друзей', content: 'Получай 🌙50 LNC за каждого друга!\n\nДелись реферальной ссылкой и зарабатывай.', bg: 'from-emerald-600 to-teal-900', emoji: '🎁', cta: 'Пригласить', ctaPage: 'referral' },
   { id: '4', title: '🎮 Мини-игры', content: '5 работ + 3 казино-игры\n\nЗарабатывайте LNC играя!', bg: 'from-orange-600 to-red-900', emoji: '🎮', cta: 'Играть', ctaPage: 'games' },
   { id: '5', title: '⭐ Premium', content: '0% комиссия\n3% кэшбэк\nVIP поддержка\n\nПодписка Cosmic — для тех, кто хочет максимум.', bg: 'from-yellow-600 to-amber-900', emoji: '⭐', cta: 'Подписаться', ctaPage: 'subscription' },
 ];
@@ -197,7 +197,7 @@ export default function StoriesScreen() {
                   <p className="text-[10px] text-white/20">{timeAgo(item.time)}</p>
                 </div>
                 {item.amount && (
-                  <p className="text-xs mono font-bold text-emerald-400/70">◎{item.amount}</p>
+                  <p className="text-xs mono font-bold text-emerald-400/70">🌙{item.amount}</p>
                 )}
               </div>
             ))}

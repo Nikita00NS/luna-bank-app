@@ -4,6 +4,7 @@ import { formatMoney, balanceInUsd, haptic, getGreeting } from '../lib/utils';
 import { CURRENCIES, LNC_RATE_USD } from '../lib/constants';
 import Logo from '../components/Logo';
 import AnimatedEmoji from '../components/AnimatedEmoji';
+import LncIcon from '../components/LncIcon';
 import {
   SendIcon, DownloadIcon, SwapIcon, DiamondIcon,
   ChartIcon, GamepadIcon, ImageIcon, ShieldIcon,
@@ -13,7 +14,7 @@ import {
 
 // Account type icons
 const ACCOUNT_ICONS: Record<string, string> = {
-  personal: '👤',
+  personal: '🌙',
   business: '💼',
   ton: '💎',
   usdt: '💵',
@@ -121,7 +122,7 @@ export default function HomeScreen() {
         <p className="text-sm text-white/30 mt-2">
           {accounts.length}{' '}
           {accounts.length === 1 ? 'счёт' : accounts.length < 5 ? 'счёта' : 'счетов'}
-          {' · '}1 LNC = ${LNC_RATE_USD}
+          {' · '}1 <LncIcon size={12} /> = ${LNC_RATE_USD}
         </p>
 
         {/* Quick Actions */}

@@ -40,7 +40,7 @@ export default function NFTScreen() {
       <div className="px-5 pt-4 pb-2 flex items-center gap-4">
         <button onClick={() => go('home')} className="text-white/50"><ArrowLeftIcon size={20} /></button>
         <h1 className="font-bold flex-1">NFT</h1>
-        <div className="glass rounded-full px-3 py-1 text-xs font-bold mono">◎{balance.toFixed(0)}</div>
+        <div className="glass rounded-full px-3 py-1 text-xs font-bold mono">🌙{balance.toFixed(0)}</div>
       </div>
       <div className="px-5 flex gap-2 mb-3">
         {(['market', 'my'] as const).map(t => (
@@ -60,7 +60,7 @@ export default function NFTScreen() {
                 <div className="text-5xl mb-2 py-2">{nft.img}</div>
                 <p className="font-bold text-xs truncate">{nft.name}</p>
                 <span className={`inline-block text-[9px] px-1.5 py-0.5 rounded-full mt-1 font-semibold ${RC[nft.rarity]}`}>{nft.rarity}</span>
-                <p className="text-sm font-extrabold mono mt-1.5">{isOwned ? '✓' : `◎${nft.price}`}</p>
+                <p className="text-sm font-extrabold mono mt-1.5">{isOwned ? '✓' : `🌙${nft.price}`}</p>
               </button>
             );
           })}
