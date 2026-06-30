@@ -48,6 +48,8 @@ import P2PScreen from './pages/P2PScreen';
 import MarketplaceScreen from './pages/MarketplaceScreen';
 import HistoryScreen from './pages/HistoryScreen';
 import TxDetailScreen from './pages/TxDetailScreen';
+import AuthScreen from './pages/AuthScreen';
+import LinkedAccountsScreen from './pages/LinkedAccountsScreen';
 
 const pages: Record<string, React.ComponentType> = {
   splash: SplashScreen,
@@ -88,6 +90,8 @@ const pages: Record<string, React.ComponentType> = {
   marketplace: MarketplaceScreen,
   history: HistoryScreen,
   'tx-detail': TxDetailScreen,
+  auth: AuthScreen,
+  'linked-accounts': LinkedAccountsScreen,
 };
 
 const NAV_PAGES = ['home', 'cards', 'portfolio', 'news', 'chat'];

@@ -19,7 +19,8 @@ export type Page =
   | 'swap' | 'exchange' | 'earn'
   | 'games' | 'social' | 'payments' | 'themes' | 'escrow'
   | 'referral' | 'achievements' | 'savings' | 'stories' | 'portfolio' | 'p2p' | 'marketplace'
-  | 'history' | 'tx-detail';
+  | 'history' | 'tx-detail'
+  | 'auth' | 'linked-accounts';
 
 export interface User {
   telegram_id: number;

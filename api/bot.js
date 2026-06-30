@@ -208,11 +208,16 @@ export default async function handler(req, res) {
         await handleBalance(chatId, tgUserId);
       } else if (text === '/id') {
         await handleId(chatId, tgUserId);
-      } else if (text === '/app') {
-        await sendMessage(chatId, '🌙 Нажмите кнопку ниже 👇', {
+      } else if (text === '/app' || text === '/download') {
+        await sendMessage(chatId,
+          `🌙 *Luna Bank — Скачать*\n━━━━━━━━━━━\n\n` +
+          `📱 *iPhone:* Откройте ссылку в Safari, нажмите "На экран Домой"\n\n` +
+          `🤖 *Android:* Скачайте APK файл\n\n` +
+          `🌐 *Веб:* Откройте прямо здесь 👇`, {
           reply_markup: {
             inline_keyboard: [
-              [{ text: '🚀 Открыть Luna Bank', web_app: { url: 'https://luna-bank-app.vercel.app' } }],
+              [{ text: '🚀 Открыть в Telegram', web_app: { url: 'https://luna-bank-app.vercel.app' } }],
+              [{ text: '🌐 Открыть в браузере', url: 'https://luna-bank-app.vercel.app' }],
             ],
           },
         });

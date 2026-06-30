@@ -42,6 +42,7 @@ export default function ProfileScreen() {
     { icon: QrCodeIcon, label: 'Мой QR', desc: user.luna_id, page: 'qr' },
     { icon: LinkIcon, label: 'TON-кошелёк', desc: tonWallet ? shortAddr(tonWallet) : 'Не подключён', page: 'ton-connect' },
     { icon: BellIcon, label: 'Уведомления', desc: '', page: 'notifications' },
+    { icon: LinkIcon, label: 'Привязанные аккаунты', desc: '', page: 'linked-accounts' },
     { icon: LockIcon, label: 'Безопасность', desc: '', page: 'settings' },
     { icon: MessageIcon, label: 'Поддержка', desc: '', page: 'chat' },
     { icon: PaletteIcon, label: 'Оформление', desc: '', page: 'themes' },
