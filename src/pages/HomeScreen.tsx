@@ -274,8 +274,6 @@ export default function HomeScreen() {
         <div className="grid grid-cols-4 gap-2">
           {([
             { Icon: ChartIcon, label: 'Биржа', page: 'exchange' as const },
-            { Icon: GamepadIcon, label: 'Игры', page: 'games' as const },
-            { Icon: ImageIcon, label: 'NFT', page: 'nft' as const },
             { Icon: ShieldIcon, label: 'Гарант', page: 'escrow' as const },
             { Icon: ReceiptIcon, label: 'Платежи', page: 'payments' as const },
             { Icon: UsersIcon, label: 'Друзья', page: 'social' as const },

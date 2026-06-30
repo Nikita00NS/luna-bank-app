@@ -22,10 +22,6 @@ import EarnScreen from './pages/EarnScreen';
 import EscrowScreen from './pages/EscrowScreen';
 
 // Content screens
-import CityScreen from './pages/CityScreen';
-import JobGameScreen from './pages/JobGameScreen';
-import GamesScreen from './pages/GamesScreen';
-import NFTScreen from './pages/NFTScreen';
 import NewsScreen from './pages/NewsScreen';
 import ChatScreen from './pages/ChatScreen';
 import SocialScreen from './pages/SocialScreen';
@@ -68,10 +64,6 @@ const pages: Record<string, React.ComponentType> = {
   exchange: ExchangeScreen,
   earn: EarnScreen,
   escrow: EscrowScreen,
-  city: CityScreen,
-  'job-game': JobGameScreen,
-  games: GamesScreen,
-  nft: NFTScreen,
   news: NewsScreen,
   chat: ChatScreen,
   social: SocialScreen,
@@ -98,7 +90,7 @@ const pages: Record<string, React.ComponentType> = {
   'tx-detail': TxDetailScreen,
 };
 
-const NAV_PAGES = ['home', 'cards', 'city', 'news', 'chat'];
+const NAV_PAGES = ['home', 'cards', 'portfolio', 'news', 'chat'];
 
 export default function App() {
   const { page, authed } = useStore();

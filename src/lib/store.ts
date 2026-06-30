@@ -17,10 +17,8 @@ export type Page =
   | 'notifications' | 'chat' | 'news' | 'city'
   | 'faq' | 'admin' | 'ton-connect' | 'markets'
   | 'swap' | 'exchange' | 'earn'
-  | 'games' | 'nft'
-  | 'social' | 'payments' | 'themes' | 'escrow'
-  | 'job-game' | 'referral'
-  | 'achievements' | 'savings' | 'stories' | 'portfolio' | 'p2p' | 'marketplace'
+  | 'games' | 'social' | 'payments' | 'themes' | 'escrow'
+  | 'referral' | 'achievements' | 'savings' | 'stories' | 'portfolio' | 'p2p' | 'marketplace'
   | 'history' | 'tx-detail';
 
 export interface User {
@@ -110,13 +108,6 @@ export interface WalletJetton {
   priceUsd?: number;
 }
 
-export interface OwnedBusiness {
-  id: string;
-  type: string;
-  name: string;
-  income: number;
-}
-
 // ===== Helpers =====
 export const uid = (): string => {
   // Generate proper UUID v4 (compatible with Supabase UUID columns)
@@ -203,11 +194,7 @@ interface AppState {
   walletJettons: WalletJetton[];
   setWalletJettons: (j: WalletJetton[]) => void;
 
-  // City
-  businesses: OwnedBusiness[];
-  jobCooldowns: Record<string, number>;
-  addBiz: (b: OwnedBusiness) => void;
-  setJobCD: (jobId: string, until: number) => void;
+
 
   // Chat
   aiMsgs: ChatMessage[];
@@ -234,7 +221,7 @@ export const useStore = create<AppState>()(
       go: (p) => set((s) => ({ page: p, prevPage: s.page })),
       back: () => set((s) => ({ page: s.prevPage || 'home', prevPage: null })),
       setTab: (t) => {
-        const pages: Page[] = ['home', 'cards', 'city', 'news', 'chat'];
+        const pages: Page[] = ['home', 'cards', 'portfolio', 'news', 'chat'];
         set({ tab: t, page: pages[t], prevPage: null });
       },
 
@@ -293,11 +280,7 @@ export const useStore = create<AppState>()(
       setWalletJettons: (j) => set({ walletJettons: j }),
 
       // City
-      businesses: [],
-      jobCooldowns: {},
-      addBiz: (b) => set((s) => ({ businesses: [...s.businesses, b] })),
-      setJobCD: (jobId, until) =>
-        set((s) => ({ jobCooldowns: { ...s.jobCooldowns, [jobId]: until } })),
+
 
       // Chat
       aiMsgs: [],
@@ -323,8 +306,7 @@ export const useStore = create<AppState>()(
         notifs: s.notifs,
         tonWallet: s.tonWallet,
         walletJettons: s.walletJettons,
-        businesses: s.businesses,
-        jobCooldowns: s.jobCooldowns,
+
         dispCurrency: s.dispCurrency,
       }),
     }

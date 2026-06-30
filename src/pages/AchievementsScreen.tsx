@@ -29,8 +29,6 @@ const ACHIEVEMENTS: Achievement[] = [
   { id: '3_accounts', icon: '🏛️', title: 'Мультисчёт', desc: 'Откройте 3 счёта', xp: 35, check: (s) => s.accounts.length >= 3 },
   { id: 'level_5', icon: '🏅', title: 'Уровень 5', desc: 'Достигните 5-го уровня', xp: 0, check: (s) => s.user?.level >= 5 },
   { id: 'level_10', icon: '🏆', title: 'Уровень 10', desc: 'Достигните 10-го уровня', xp: 0, check: (s) => s.user?.level >= 10 },
-  { id: 'job_done', icon: '💼', title: 'Работяга', desc: 'Выполните задание', xp: 15, check: (s) => s.txs.some((t: any) => t.type === 'job') },
-  { id: 'game_won', icon: '🎮', title: 'Геймер', desc: 'Выиграйте в казино', xp: 15, check: (s) => s.txs.some((t: any) => t.note?.includes('WIN')) },
 ];
 
 interface LeaderboardEntry {

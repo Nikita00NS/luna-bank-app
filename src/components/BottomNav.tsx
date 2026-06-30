@@ -1,12 +1,12 @@
 import React from 'react';
 import { useStore } from '../lib/store';
 import { haptic } from '../lib/utils';
-import { HomeIcon, WalletIcon, BuildingIcon, NewspaperIcon, MessageIcon } from './Icons';
+import { HomeIcon, WalletIcon, TrendingUpIcon, NewspaperIcon, MessageIcon } from './Icons';
 
 const TABS = [
   { icon: HomeIcon, label: 'Главная' },
   { icon: WalletIcon, label: 'Счета' },
-  { icon: BuildingIcon, label: 'Город' },
+  { icon: TrendingUpIcon, label: 'Портфель' },
   { icon: NewspaperIcon, label: 'Витрина' },
   { icon: MessageIcon, label: 'Чаты' },
 ];
