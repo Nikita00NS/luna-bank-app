@@ -17,7 +17,7 @@ export type Page =
   | 'notifications' | 'chat' | 'news' | 'city'
   | 'faq' | 'admin' | 'ton-connect' | 'markets'
   | 'swap' | 'exchange' | 'earn'
-  | 'games' | 'social' | 'payments' | 'themes' | 'escrow'
+  | 'games' | 'social' | 'payments' | 'themes' | 'escrow' | 'city'
   | 'referral' | 'achievements' | 'savings' | 'stories' | 'portfolio' | 'p2p' | 'marketplace'
   | 'history' | 'tx-detail'
   | 'auth' | 'linked-accounts';
@@ -222,7 +222,7 @@ export const useStore = create<AppState>()(
       go: (p) => set((s) => ({ page: p, prevPage: s.page })),
       back: () => set((s) => ({ page: s.prevPage || 'home', prevPage: null })),
       setTab: (t) => {
-        const pages: Page[] = ['home', 'cards', 'portfolio', 'news', 'chat'];
+        const pages: Page[] = ['home', 'cards', 'portfolio', 'city', 'profile'];
         set({ tab: t, page: pages[t], prevPage: null });
       },
 

@@ -1,135 +1,104 @@
-# 📱 Luna Bank — Сборка приложения для iPhone и Android
-
-## ⏱ Займёт: ~30 минут (первый раз), потом 2 минуты
+# 📱 Luna Bank — Установка на iPhone и Android
 
 ---
 
-## ШАГ 1: Установи программы на Mac
+## 🤖 Android — просто APK
 
-### 1.1 — Xcode (для iPhone)
-1. Открой **App Store** на Mac
-2. Найди **Xcode** (от Apple, бесплатно)
-3. Нажми **Скачать** (весит ~12 ГБ, подожди)
-4. После установки — открой Xcode один раз, прими лицензию
+### На Mac (одноразово):
+1. Скачай Android Studio: https://developer.android.com/studio
+2. Установи, открой, подожди пока скачается SDK
 
-### 1.2 — Android Studio (для Android)
-1. Открой в браузере: https://developer.android.com/studio
-2. Нажми **Download Android Studio**
-3. Установи как обычную программу (перетащи в Applications)
-4. Открой Android Studio → Setup Wizard → выбери **Standard** → Next → Finish
-5. Подожди пока скачается Android SDK (~5 ГБ)
-
-### 1.3 — Node.js (если ещё нет)
-1. Открой в браузере: https://nodejs.org
-2. Скачай **LTS версию**
-3. Установи
-
----
-
-## ШАГ 2: Скачай проект
-
-Открой **Терминал** (Cmd+Пробел → набери "Terminal" → Enter)
-
-Скопируй и вставь эти команды **по одной**:
-
+### Сборка APK:
 ```bash
 cd ~/Desktop
 git clone https://github.com/Nikita00NS/luna-bank-app.git
 cd luna-bank-app
 npm install
-```
-
-Подожди пока всё установится (~1-2 мин).
-
----
-
-## ШАГ 3: Собери веб-часть
-
-```bash
 npm run build
-npx cap sync
-```
-
----
-
-## ШАГ 4: Собери Android APK
-
-### В терминале:
-```bash
+npx cap sync android
 npx cap open android
 ```
-
-Откроется Android Studio с проектом.
-
-### В Android Studio:
-1. Подожди пока проект загрузится (внизу будет полоса загрузки, ~2-3 мин)
-2. В верхнем меню нажми: **Build → Build Bundle(s) / APK(s) → Build APK(s)**
-3. Подожди пока соберётся (~1-2 мин)
-4. Появится уведомление внизу справа: "APK(s) generated successfully"
-5. Нажми **locate** — откроется папка с файлом **app-debug.apk**
-
-### Этот APK файл — твоё приложение для Android!
-- Отправь его себе в Telegram
-- На Android телефоне открой и установи
-- Готово!
+3. В Android Studio подожди загрузку (~2 мин)
+4. Меню: **Build → Build Bundle(s) / APK(s) → Build APK(s)**
+5. APK файл появится в `android/app/build/outputs/apk/debug/`
+6. Отправь APK в Telegram → установи на Android
 
 ---
 
-## ШАГ 5: Собери для iPhone (TestFlight)
+## 🍎 iPhone — БЕЗ $99 (бесплатно!)
 
-### В терминале:
+### Способ 1: Через Xcode напрямую (рекомендую)
+
+**Нужно:** Mac + iPhone + USB-кабель + бесплатный Apple ID
+
+1. Установи Xcode из App Store (бесплатно)
+2. В терминале:
 ```bash
+cd ~/Desktop/luna-bank-app
+npm run build
+npx cap sync ios
 npx cap open ios
 ```
+3. В Xcode:
+   - Слева нажми на **App** (синяя иконка, самый верх)
+   - В центре → **Signing & Capabilities**
+   - Поставь ✅ **Automatically manage signing**
+   - **Team** → нажми **Add Account** → войди своим Apple ID (тот что на iPhone)
+   - **Bundle Identifier**: оставь `app.lunabank.crypto`
+4. Подключи iPhone кабелем
+5. Вверху Xcode выбери свой iPhone
+6. Нажми ▶️ **Run**
+7. На iPhone: Настройки → Основные → **VPN и управление устройствами** → Доверять
 
-Откроется Xcode с проектом.
+**⚠️ Ограничение:** приложение работает 7 дней, потом нужно снова подключить к Mac и нажать Run. Это ограничение Apple для бесплатных аккаунтов.
 
-### В Xcode:
-1. Слева в навигаторе нажми на **App** (самый верх, синяя иконка)
-2. В центре → вкладка **Signing & Capabilities**
-3. Поставь галочку **Automatically manage signing**
-4. В **Team** — выбери свой Apple ID (если нет — нажми Add Account → войди Apple ID)
-5. В **Bundle Identifier** оставь: `app.lunabank.crypto`
+### Способ 2: Через AltStore (без подключения каждые 7 дней)
 
-### Собрать для своего iPhone (без TestFlight):
-1. Подключи iPhone кабелем к Mac
-2. Вверху Xcode выбери свой iPhone (вместо "Any iOS Device")
-3. Нажми ▶️ (кнопка Play)
-4. На iPhone появится диалог "Доверять разработчику?" → Настройки → Основные → Профили → Доверять
-5. Приложение установится на телефон!
+1. Скачай AltServer на Mac: https://altstore.io
+2. Установи AltStore на iPhone через AltServer (по Wi-Fi)
+3. Собери .ipa файл:
+```bash
+cd ~/Desktop/luna-bank-app
+npm run build
+npx cap sync ios
+```
+4. В Xcode: Product → Archive → Export → Ad Hoc → получишь .ipa файл
+5. Открой .ipa через AltStore на iPhone
+6. AltStore автоматически обновляет подпись каждые 7 дней по Wi-Fi!
 
-### Собрать для TestFlight (раздавать другим):
-1. Нужен Apple Developer Account ($99/год) — https://developer.apple.com/programs/
-2. В Xcode: Product → Archive
-3. Window → Organizer → Distribute App → App Store Connect
-4. В App Store Connect → TestFlight → Добавить тестеров по email
+### Способ 3: PWA (самый простой, без Mac)
+
+На iPhone:
+1. Открой Safari → https://luna-bank-app.vercel.app
+2. Нажми 📤 (Поделиться)
+3. «На экран "Домой"»
+4. Готово — работает как приложение!
 
 ---
 
-## 🔄 Обновление приложения
+## 🔄 Обновление
 
-Когда обновишь код:
 ```bash
 cd ~/Desktop/luna-bank-app
 git pull
+npm install
 npm run build
 npx cap sync
-npx cap open android   # или ios
+# Потом Build APK или Run на iPhone
 ```
-И снова Build APK / Run на iPhone.
 
 ---
 
-## ❓ Проблемы?
+## ❓ FAQ
 
-### "Command not found: npx"
-→ Установи Node.js: https://nodejs.org
+**Q: "Untrusted Developer" на iPhone?**
+A: Настройки → Основные → VPN и управление устройствами → Доверять
 
-### "Could not find an installed version of Gradle"
-→ Открой Android Studio → Preferences → Android SDK → SDK Tools → поставь галочку на Gradle
+**Q: Приложение пропало через 7 дней?**
+A: Подключи iPhone к Mac, в Xcode нажми Run. Или используй AltStore.
 
-### "No signing certificate"
-→ В Xcode → Signing & Capabilities → добавь Apple ID
+**Q: APK не устанавливается?**
+A: Настройки → Безопасность → Разрешить неизвестные источники
 
-### APK не устанавливается на Android
-→ На телефоне: Настройки → Безопасность → Разрешить установку из неизвестных источников
+**Q: Нет Mac для iPhone?**
+A: Используй PWA (Способ 3) — работает в Safari.
