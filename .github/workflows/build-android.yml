@@ -18,7 +18,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -26,36 +26,58 @@ jobs:
       
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: '11076708'
       
-      - name: Install dependencies
-        run: npm ci
+      - name: Accept Android licenses
+        run: yes | sdkmanager --licenses 2>/dev/null || true
+      
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platforms;android-35" "build-tools;35.0.0" 2>/dev/null || true
+      
+      - name: Install npm dependencies
+        run: npm ci || npm install
       
       - name: Build web
         run: npm run build
+        env:
+          NODE_ENV: production
       
-      - name: Sync Capacitor
+      - name: Sync Capacitor Android
         run: npx cap sync android
       
-      - name: Build APK
+      - name: Make gradlew executable
         working-directory: android
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug
+        run: chmod +x gradlew
       
-      - name: Rename APK
+      - name: Build Debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+      
+      - name: Prepare release
         run: |
           mkdir -p release
           cp android/app/build/outputs/apk/debug/app-debug.apk release/LunaBank-v1.3.apk
+          echo "APK size: $(du -h release/LunaBank-v1.3.apk | cut -f1)"
       
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LunaBank-APK
+          name: LunaBank-v1.3-APK
           path: release/LunaBank-v1.3.apk
+          retention-days: 90
       
-      - name: Release
+      - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: release/LunaBank-v1.3.apk
+          name: "Luna Bank v1.3.0"
+          body: |
+            🌙 **Luna Bank v1.3.0** — Crypto Banking Ecosystem
+            
+            📱 **Download APK** and install on Android
+            🌐 **Web App**: https://luna-bank-app.vercel.app
+            🤖 **Bot**: https://t.me/LunaBankBot
           generate_release_notes: true
