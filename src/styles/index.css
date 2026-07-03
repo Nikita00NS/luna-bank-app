@@ -65,8 +65,8 @@ input, textarea, select { font-family: inherit; }
   }
 
   /* ===== SAFE AREAS ===== */
-  .safe-top { padding-top: env(safe-area-inset-top, 0px); }
-  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .safe-top { padding-top: max(env(safe-area-inset-top, 0px), 20px); }
+  .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom, 0px), 20px); }
 
   /* ===== PIN DOTS ===== */
   .pin-dot {

@@ -118,7 +118,7 @@ export default function App() {
   const showNav = authed && NAV_PAGES.includes(page);
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-black text-white">
+    <div className="h-screen w-screen overflow-hidden bg-black text-white" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <PageComponent />
       {showNav && <BottomNav />}
     </div>

@@ -15,7 +15,7 @@ export default function BottomNav() {
   const { tab: activeTab, setTab } = useStore();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-strong safe-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-strong" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}>
       <div className="flex items-center justify-around py-2 max-w-lg mx-auto">
         {TABS.map((t, i) => {
           const isActive = activeTab === i;
