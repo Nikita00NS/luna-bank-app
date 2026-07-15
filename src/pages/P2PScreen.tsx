@@ -1,263 +1,289 @@
-import React, { useState, useEffect } from 'react';
-import { useStore, uid } from '../lib/store';
-import { haptic, timeAgo } from '../lib/utils';
-import { dbUpdateBalance, dbCreateTransaction, dbCreateP2POffer, dbGetP2POffers, dbGetMyP2POffers, dbUpdateP2POffer } from '../lib/db';
-import { ArrowLeftIcon, PlusIcon } from '../components/Icons';
-import AnimatedEmoji from '../components/AnimatedEmoji';
-import Modal from '../components/Modal';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useStore } from '../lib/store';
+import { useTonConnectUI } from '@tonconnect/ui-react';
+import { haptic, formatCrypto, formatFiat } from '../lib/utils';
+import { buildTransfer } from '../lib/ton';
+import { PAYMENT_METHODS } from '../lib/constants';
+import { useP2P, P2POfferData } from '../hooks/useP2P';
+import { toastSuccess, toastError } from '../lib/toast';
+import { ArrowLeftIcon, RefreshIcon, PlusIcon, CloseIcon } from '../components/Icons';
 
-interface P2POffer {
-  id: string;
-  user_id: number;
-  username: string;
-  first_name: string;
-  type: 'buy' | 'sell';
-  amount: number;
-  price: number; // price per 1 LNC in RUB
-  currency: string;
-  min_limit: number;
-  max_limit: number;
-  payment_methods: string[];
-  status: 'active' | 'completed' | 'cancelled';
-  created_at: string;
-}
-
-const PAYMENT_METHODS = ['💳 Тинькофф', '💳 Сбер', '💳 Альфа', '📱 СБП', '💎 USDT TRC20', '💎 TON'];
+type TabType = 'buy' | 'sell';
 
 export default function P2PScreen() {
-  const { user, accounts, go, updateBalance, addTx, addNotif } = useStore();
-  const [tab, setTab] = useState<'buy' | 'sell' | 'my'>('buy');
-  const [offers, setOffers] = useState<P2POffer[]>([]);
-  const [myOffers, setMyOffers] = useState<P2POffer[]>([]);
+  const { go, back, tonWallet, tokens } = useStore();
+  const [tonConnectUI] = useTonConnectUI();
+  const { offers, myOffers, loading, creating, fetchOffers, fetchMyOffers, createOffer, deleteOffer, startTrade } = useP2P();
+
+  const [tab, setTab] = useState<TabType>('buy');
+  const [coin, setCoin] = useState('USDT');
+  const [amount, setAmount] = useState('');
+  const [fiatAmount, setFiatAmount] = useState('');
+  const [selectedOffer, setSelectedOffer] = useState<P2POfferData | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [showDeal, setShowDeal] = useState(false);
-  const [selectedOffer, setSelectedOffer] = useState<P2POffer | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [trading, setTrading] = useState(false);
+  const [showMyOffers, setShowMyOffers] = useState(false);
 
-  // Create form
-  const [newType, setNewType] = useState<'buy' | 'sell'>('sell');
-  const [newAmount, setNewAmount] = useState('');
-  const [newPrice, setNewPrice] = useState('4.5'); // RUB per LNC
-  const [newMethods, setNewMethods] = useState<string[]>(['💳 Тинькофф']);
-  const [dealAmount, setDealAmount] = useState('');
+  const [createType, setCreateType] = useState<TabType>('sell');
+  const [createCoin, setCreateCoin] = useState('USDT');
+  const [createPrice, setCreatePrice] = useState('');
+  const [createAmount, setCreateAmount] = useState('');
+  const [createMin, setCreateMin] = useState('');
+  const [createMax, setCreateMax] = useState('');
+  const [createPayment, setCreatePayment] = useState(PAYMENT_METHODS[0]);
 
-  if (!user) return null;
-  const lncAcc = accounts.find((a) => a.currency === 'LNC');
+  useEffect(() => { fetchOffers(tab); }, [tab, fetchOffers]);
+  useEffect(() => { fetchMyOffers(); }, [fetchMyOffers]);
 
-  useEffect(() => { loadOffers(); }, [tab]);
+  const filteredOffers = useMemo(() =>
+    offers.filter(o => o.type === tab && o.coin === coin),
+    [offers, tab, coin]
+  );
 
-  const loadOffers = async () => {
-    setLoading(true);
-    try {
-      const searchType = tab === 'buy' ? 'sell' : 'buy';
-      const [offerData, myData] = await Promise.all([
-        dbGetP2POffers(searchType as any, user.telegram_id),
-        dbGetMyP2POffers(user.telegram_id),
-      ]);
-      setOffers(offerData as P2POffer[]);
-      setMyOffers(myData as P2POffer[]);
-    } catch {}
-    setLoading(false);
+  const handleAmountChange = (val: string) => {
+    setAmount(val);
+    if (selectedOffer) {
+      setFiatAmount((Number(val) * selectedOffer.price).toFixed(2));
+    }
   };
 
-  const createOffer = async () => {
-    const amount = parseFloat(newAmount) || 0;
-    const price = parseFloat(newPrice) || 0;
-    if (amount <= 0 || price <= 0) { haptic('error'); return; }
-    if (newType === 'sell' && lncAcc && lncAcc.balance < amount) { haptic('error'); return; }
-
-    haptic('success');
-    await dbCreateP2POffer({
-      user_id: user.telegram_id,
-      username: user.username,
-      first_name: user.first_name,
-      type: newType,
-      amount,
-      price,
-      currency: 'RUB',
-      min_limit: 100,
-      max_limit: amount * price,
-      payment_methods: newMethods,
-      status: 'active',
-    });
-
-    // If selling, freeze balance
-    if (newType === 'sell' && lncAcc) {
-      updateBalance(lncAcc.id, -amount);
-      dbUpdateBalance(lncAcc.id, -amount).catch(() => {});
-    }
-
-    setShowCreate(false);
-    setNewAmount('');
-    loadOffers();
+  const handleSelectOffer = (offer: P2POfferData) => {
+    setSelectedOffer(offer);
+    haptic('light');
   };
 
-  const executeDeal = async () => {
-    if (!selectedOffer || !lncAcc) return;
-    const amt = parseFloat(dealAmount) || 0;
-    if (amt <= 0 || amt > selectedOffer.amount) { haptic('error'); return; }
+  const handleStartTrade = async () => {
+    if (!selectedOffer || !tonWallet || !Number(amount)) return;
+    setTrading(true);
+    await startTrade(selectedOffer, Number(amount));
+    setTrading(false);
+    setSelectedOffer(null);
+    setAmount('');
+    setFiatAmount('');
+  };
 
-    haptic('success');
-
-    // Update buyer's balance
-    if (selectedOffer.type === 'sell') {
-      // We're buying → we get LNC
-      updateBalance(lncAcc.id, amt);
-      dbUpdateBalance(lncAcc.id, amt).catch(() => {});
-    } else {
-      // We're selling → we lose LNC
-      if (lncAcc.balance < amt) { haptic('error'); return; }
-      updateBalance(lncAcc.id, -amt);
-      dbUpdateBalance(lncAcc.id, -amt).catch(() => {});
+  const handleCreateOffer = async () => {
+    if (!createPrice || !createAmount) return;
+    const ok = await createOffer({
+      type: createType,
+      coin: createCoin,
+      price: Number(createPrice),
+      amount: Number(createAmount),
+      min_amount: Number(createMin) || Number(createAmount) * 0.1,
+      max_amount: Number(createMax) || Number(createAmount) * 10,
+      payment_method: createPayment,
+    });
+    if (ok) {
+      setShowCreate(false);
+      setCreatePrice('');
+      setCreateAmount('');
     }
-
-    // Record transaction
-    addTx({
-      id: uid(), from_user_id: user.telegram_id, to_user_id: selectedOffer.user_id,
-      from_account_id: lncAcc.id, to_account_id: 'p2p', amount: amt, fee: 0, currency: 'LNC',
-      type: 'transfer', status: 'completed',
-      note: `P2P ${selectedOffer.type === 'sell' ? 'Покупка' : 'Продажа'} 🌙${amt} @ ₽${selectedOffer.price}`,
-      created_at: new Date().toISOString(),
-    });
-
-    addNotif({ id: uid(), title: '🔄 P2P Сделка', message: `🌙${amt} LNC по ₽${selectedOffer.price}/LNC`, type: 'transfer', read: false, created_at: new Date().toISOString() });
-
-    // Update offer in DB
-    const remaining = selectedOffer.amount - amt;
-    await dbUpdateP2POffer(selectedOffer.id, {
-      amount: remaining,
-      status: remaining <= 0 ? 'completed' : 'active',
-    });
-
-    setShowDeal(false);
-    setDealAmount('');
-    loadOffers();
   };
 
   return (
-    <div className="h-full flex flex-col bg-black safe-top">
-      <div className="px-5 pt-4 pb-2 flex items-center gap-4">
-        <button onClick={() => go('home')} className="text-white/50"><ArrowLeftIcon size={20} /></button>
-        <h1 className="font-bold flex-1">P2P Биржа</h1>
-        <button onClick={() => { setShowCreate(true); haptic('light'); }} className="glass rounded-full w-8 h-8 flex items-center justify-center">
-          <PlusIcon size={16} />
-        </button>
-      </div>
-
-      {/* Tabs */}
-      <div className="px-5 mt-1 flex gap-1.5 p-1 glass rounded-2xl">
-        {(['buy', 'sell', 'my'] as const).map((t) => (
-          <button key={t} onClick={() => { setTab(t); haptic('light'); }}
-            className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${tab === t ? 'bg-white text-black' : 'text-white/40'}`}>
-            {t === 'buy' ? '📈 Купить' : t === 'sell' ? '📉 Продать' : `📋 Мои (${myOffers.length})`}
+    <div className="page safe-top">
+      <div className="header">
+        {showMyOffers ? (
+          <button onClick={() => { setShowMyOffers(false); haptic('light'); }} className="back-btn"><ArrowLeftIcon size={18} color="var(--text)" /></button>
+        ) : (
+          <button onClick={() => { haptic('light'); back(); }} className="back-btn"><ArrowLeftIcon size={18} color="var(--text)" /></button>
+        )}
+        <p className="header-title">P2P Trading</p>
+        <div className="flex items-center gap-2 ml-auto">
+          <button onClick={() => { setShowMyOffers(!showMyOffers); haptic('light'); }}
+            className="px-3 py-1.5 rounded-lg text-[10px] font-medium bg-[var(--bg-card)] text-[var(--text-secondary)]">
+            My ({myOffers.length})
           </button>
-        ))}
+          {!showMyOffers && (
+            <button onClick={() => { setShowCreate(true); haptic('light'); }}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 bg-[var(--accent)] text-white">
+              <PlusIcon size={12} color="white" /> Create
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 pb-24 mt-3">
-        {(tab === 'buy' || tab === 'sell') && (
-          <div className="space-y-2 animate-fade-in">
-            {offers.length === 0 ? (
-              <div className="text-center py-14">
-                <AnimatedEmoji type="wallet" size={48} />
-                <p className="text-white/30 text-sm mt-3">Нет объявлений</p>
-                <button onClick={() => setShowCreate(true)} className="btn-primary mt-4 px-6">+ Создать</button>
-              </div>
-            ) : (
-              offers.map((offer, i) => (
-                <button key={offer.id} onClick={() => { setSelectedOffer(offer); setShowDeal(true); haptic('light'); }}
-                  className="w-full glass p-4 rounded-2xl text-left active:scale-[0.98] transition-all animate-slide-up" style={{ animationDelay: `${i * 0.05}s` }}>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-sm font-bold">
-                      {offer.first_name[0]}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-bold text-sm">{offer.first_name}</p>
-                      <p className="text-[10px] text-white/25">@{offer.username}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-extrabold text-lg">₽{offer.price}</p>
-                      <p className="text-[9px] text-white/25">за 1 LNC</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-between text-xs text-white/30">
-                    <span>🌙{offer.amount} LNC</span>
-                    <span>{offer.payment_methods.join(' ')}</span>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        )}
-
-        {tab === 'my' && (
-          <div className="space-y-2 animate-fade-in">
-            {myOffers.length === 0 ? (
-              <div className="text-center py-14">
-                <p className="text-white/30 text-sm">У вас нет объявлений</p>
-              </div>
-            ) : (
-              myOffers.map((o) => (
-                <div key={o.id} className="glass p-3 rounded-xl flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${o.type === 'sell' ? 'bg-red-500/15 text-red-400' : 'bg-emerald-500/15 text-emerald-400'}`}>
-                    {o.type === 'sell' ? '↓' : '↑'}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{o.type === 'sell' ? 'Продажа' : 'Покупка'} 🌙{o.amount}</p>
-                    <p className="text-[10px] text-white/25">₽{o.price}/LNC · {o.status}</p>
-                  </div>
+      {showMyOffers ? (
+        <div className="px-4 mt-4 space-y-2">
+          {myOffers.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-[var(--text-tertiary)]">No offers</p>
+            </div>
+          ) : myOffers.map((o) => (
+            <div key={o.id} className="card p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${o.type === 'buy' ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}
+                    style={{ background: o.type === 'buy' ? 'var(--green)/10' : 'var(--red)/10' }}>
+                    {o.type === 'buy' ? 'Buy' : 'Sell'} {o.coin}
+                  </span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${o.status === 'active' ? 'text-[var(--green)]' : 'text-[var(--text-tertiary)]'}`}>
+                    {o.status === 'active' ? 'Active' : 'Closed'}
+                  </span>
                 </div>
-              ))
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Create Modal */}
-      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Новое объявление">
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <button onClick={() => setNewType('sell')} className={`flex-1 py-3 rounded-xl font-bold text-sm ${newType === 'sell' ? 'bg-red-500 text-white' : 'glass text-white/50'}`}>Продать LNC</button>
-            <button onClick={() => setNewType('buy')} className={`flex-1 py-3 rounded-xl font-bold text-sm ${newType === 'buy' ? 'bg-emerald-500 text-white' : 'glass text-white/50'}`}>Купить LNC</button>
-          </div>
-          <input type="number" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} placeholder="Количество LNC" className="w-full glass px-4 py-3 bg-transparent text-white mono outline-none rounded-xl" />
-          <input type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="Цена за 1 LNC (₽)" className="w-full glass px-4 py-3 bg-transparent text-white mono outline-none rounded-xl" />
-          <div className="flex flex-wrap gap-1.5">
-            {PAYMENT_METHODS.map((m) => (
-              <button key={m} onClick={() => setNewMethods((prev) => prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m])}
-                className={`px-2.5 py-1.5 rounded-lg text-[10px] ${newMethods.includes(m) ? 'bg-white/10 ring-1 ring-white/20' : 'glass'}`}>
-                {m}
+                <button onClick={() => deleteOffer(o.id)}
+                  className="p-1.5 rounded-lg active:bg-[var(--red)/10]">
+                  <CloseIcon size={12} color="var(--red)" />
+                </button>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span>{formatFiat(o.price)} ₽</span>
+                <span>{formatCrypto(o.available)} {o.coin}</span>
+                <span className="text-xs text-[var(--text-tertiary)]">{o.payment_method}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : showCreate ? (
+        <div className="px-4 mt-4 space-y-4">
+          <div className="flex p-1 rounded-lg bg-[var(--bg-card)]">
+            {(['sell', 'buy'] as const).map((t) => (
+              <button key={t} onClick={() => setCreateType(t)}
+                className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${createType === t ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-secondary)]'}`}>
+                {t === 'sell' ? 'Sell' : 'Buy'}
               </button>
             ))}
           </div>
-          {newAmount && newPrice && (
-            <p className="text-xs text-white/30 text-center">Итого: ₽{((parseFloat(newAmount) || 0) * (parseFloat(newPrice) || 0)).toFixed(0)}</p>
-          )}
-          <button onClick={createOffer} disabled={!newAmount || !newPrice} className="btn-primary w-full">Создать объявление</button>
-        </div>
-      </Modal>
 
-      {/* Deal Modal */}
-      <Modal open={showDeal} onClose={() => setShowDeal(false)} title={selectedOffer ? `${selectedOffer.type === 'sell' ? '📈 Купить' : '📉 Продать'} LNC` : ''}>
-        {selectedOffer && (
-          <div className="space-y-4">
-            <div className="glass p-3 rounded-xl space-y-1.5">
-              <div className="flex justify-between text-sm"><span className="text-white/35">Продавец</span><span>@{selectedOffer.username}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-white/35">Цена</span><span className="font-bold">₽{selectedOffer.price}/LNC</span></div>
-              <div className="flex justify-between text-sm"><span className="text-white/35">Доступно</span><span>🌙{selectedOffer.amount}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-white/35">Оплата</span><span className="text-xs">{selectedOffer.payment_methods.join(', ')}</span></div>
+          <div className="flex gap-2">
+            {['USDT', 'TON'].map(c => (
+              <button key={c} onClick={() => setCreateCoin(c)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium ${createCoin === c ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'}`}>
+                {c}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-[var(--text-tertiary)] mb-1 block">Price per 1 {createCoin} (RUB)</label>
+              <input type="number" value={createPrice} onChange={e => setCreatePrice(e.target.value)}
+                placeholder="0.00" className="input" />
             </div>
-            <input type="number" value={dealAmount} onChange={(e) => setDealAmount(e.target.value)} placeholder="Количество LNC"
-              className="w-full glass px-4 py-3.5 bg-transparent text-white text-xl mono outline-none text-center rounded-xl" />
-            {dealAmount && (
-              <p className="text-center text-sm text-white/40">= ₽{((parseFloat(dealAmount) || 0) * selectedOffer.price).toFixed(0)}</p>
-            )}
-            <button onClick={executeDeal} disabled={!dealAmount} className="btn-primary w-full">
-              {selectedOffer.type === 'sell' ? 'Купить' : 'Продать'} 🌙{dealAmount || 0}
+            <div>
+              <label className="text-xs text-[var(--text-tertiary)] mb-1 block">Amount {createCoin}</label>
+              <input type="number" value={createAmount} onChange={e => setCreateAmount(e.target.value)}
+                placeholder="0.00" className="input" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-[var(--text-tertiary)] mb-1 block">Min deal (RUB)</label>
+                <input type="number" value={createMin} onChange={e => setCreateMin(e.target.value)}
+                  placeholder="1000" className="input" />
+              </div>
+              <div>
+                <label className="text-xs text-[var(--text-tertiary)] mb-1 block">Max deal (RUB)</label>
+                <input type="number" value={createMax} onChange={e => setCreateMax(e.target.value)}
+                  placeholder="500000" className="input" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-[var(--text-tertiary)] mb-1 block">Payment Method</label>
+              <select value={createPayment} onChange={e => setCreatePayment(e.target.value)}
+                className="input">
+                {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button onClick={() => setShowCreate(false)} className="btn btn-secondary flex-1">Cancel</button>
+            <button onClick={handleCreateOffer} disabled={!createPrice || !createAmount || creating} className="btn btn-primary flex-1">
+              {creating ? 'Creating...' : 'Create Offer'}
             </button>
           </div>
-        )}
-      </Modal>
+        </div>
+      ) : (
+        <>
+          <div className="px-4 mt-2">
+            <div className="flex p-1 rounded-lg bg-[var(--bg-card)]">
+              {(['buy', 'sell'] as const).map((t) => (
+                <button key={t} onClick={() => { setTab(t); setSelectedOffer(null); setAmount(''); }}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${tab === t ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-secondary)]'}`}>
+                  {t === 'buy' ? 'Buy' : 'Sell'} Crypto
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="px-4 mt-4 flex gap-2">
+            {['USDT', 'TON'].map(c => (
+              <button key={c} onClick={() => { setCoin(c); setSelectedOffer(null); }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${coin === c ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'}`}>
+                {c}
+              </button>
+            ))}
+          </div>
+
+          <div className="px-4 mt-4 space-y-2">
+            {loading ? (
+              <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="skeleton h-24 w-full" />)}</div>
+            ) : filteredOffers.length === 0 ? (
+              <div className="py-12 text-center">
+                <p className="text-[var(--text-tertiary)]">No active offers</p>
+              </div>
+            ) : filteredOffers.map((offer) => {
+              const isSelected = selectedOffer?.id === offer.id;
+              return (
+                <button key={offer.id} onClick={() => handleSelectOffer(offer)}
+                  className={`w-full card p-4 text-left transition-all ${isSelected ? 'ring-1 ring-[var(--accent)]' : ''}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-[var(--bg-card)]">
+                        {offer.user_name[0]}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{offer.user_name}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold">{formatFiat(offer.price)}</p>
+                      <p className="text-[10px] text-[var(--text-tertiary)]">per 1 {offer.coin}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-[var(--text-tertiary)]">
+                    <span>{formatCrypto(offer.available)} {offer.coin} available</span>
+                    <span>{formatFiat(offer.min_amount)}–{formatFiat(offer.max_amount)} RUB</span>
+                    <span>{offer.payment_method}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {selectedOffer && (
+            <div className="px-4 mt-4 pb-8">
+              <div className="card p-4 space-y-4">
+                <p className="font-semibold">{tab === 'buy' ? 'Buy' : 'Sell'} {coin} from {selectedOffer.user_name}</p>
+                <div className="space-y-2">
+                  <label className="text-xs text-[var(--text-tertiary)]">Amount {coin}</label>
+                  <input type="number" value={amount} onChange={(e) => handleAmountChange(e.target.value)}
+                    placeholder="0.00" className="input text-xl font-bold mono" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs text-[var(--text-tertiary)]">To pay (RUB)</label>
+                  <input type="text" value={fiatAmount ? `${formatFiat(Number(fiatAmount))} ₽` : ''}
+                    readOnly placeholder="0 ₽" className="input text-xl font-bold mono" />
+                </div>
+                <div className="p-3 rounded-lg text-xs bg-[var(--bg-surface)] text-[var(--text-tertiary)]">
+                  <div className="flex justify-between mb-1"><span>Rate</span><span>{formatFiat(selectedOffer.price)} ₽</span></div>
+                  <div className="flex justify-between mb-1"><span>Payment</span><span>{selectedOffer.payment_method}</span></div>
+                  <div className="flex justify-between"><span>Limits</span><span>{formatFiat(selectedOffer.min_amount)} – {formatFiat(selectedOffer.max_amount)} ₽</span></div>
+                </div>
+                <button onClick={handleStartTrade} disabled={!Number(amount) || trading}
+                  className={`w-full py-4 rounded-lg font-semibold text-center transition-all active:scale-[0.97] ${tab === 'buy' ? 'btn btn-success' : 'btn btn-danger'}`}>
+                  {trading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Processing...
+                    </span>
+                  ) : tab === 'buy' ? `Buy ${amount || '0'} ${coin}` : `Sell ${amount || '0'} ${coin}`}
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

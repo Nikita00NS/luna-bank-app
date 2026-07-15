@@ -1,39 +1,51 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lunabank.crypto',
-  appName: 'Luna Bank',
+  appId: 'app.lunawallet.crypto',
+  appName: 'Luna Wallet',
   webDir: 'dist',
   server: {
     androidScheme: 'https',
-    iosScheme: 'https',
-    // For development, use the live server:
-    // url: 'https://luna-bank-app.vercel.app',
+    iosScheme: 'tonconnect',
+    cleartext: false,
   },
   plugins: {
     StatusBar: {
-      backgroundColor: '#000000',
+      backgroundColor: '#0a0a0f',
       style: 'DARK',
+      overlaysWebView: false,
     },
     Keyboard: {
       resize: 'body',
       resizeOnFullScreen: true,
+      style: 'DARK',
     },
     SplashScreen: {
       launchShowDuration: 2000,
-      backgroundColor: '#000000',
+      backgroundColor: '#0a0a0f',
       showSpinner: false,
+      androidScaleType: 'CENTER_CROP',
+      androidSpinnerStyle: 'small',
+    },
+    Haptics: {
+      enabled: true,
     },
   },
   ios: {
     contentInset: 'always',
-    backgroundColor: '#000000',
+    backgroundColor: '#0a0a0f',
     preferredContentMode: 'mobile',
     scrollEnabled: true,
+    allowsLinkPreview: false,
+    minimumOSVersion: '15.0',
   },
   android: {
-    backgroundColor: '#000000',
-    allowMixedContent: true,
+    backgroundColor: '#0a0a0f',
+    allowMixedContent: false,
+    captureInput: true,
+    useLegacyBridge: false,
+    minSdkVersion: 26,
+    targetSdkVersion: 34,
   },
 };
 

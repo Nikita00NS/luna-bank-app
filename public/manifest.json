@@ -1,20 +1,57 @@
 {
-  "name": "Luna Bank",
-  "short_name": "Luna Bank",
-  "description": "Крипто-финансовая экосистема",
+  "name": "Luna Wallet",
+  "short_name": "Luna",
+  "description": "Luna Wallet — крипто-кошелёк на TON Blockchain",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
   "orientation": "portrait",
+  "scope": "/",
+  "lang": "ru",
+  "dir": "ltr",
+  "categories": ["finance", "cryptocurrency", "wallet"],
   "icons": [
     {
       "src": "/logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "categories": ["finance", "crypto"],
-  "lang": "ru"
+  "screenshots": [],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "Отправить",
+      "short_name": "Send",
+      "description": "Быстрая отправка TON",
+      "url": "/?action=send"
+    },
+    {
+      "name": "Получить",
+      "short_name": "Receive",
+      "description": "Показать QR-код",
+      "url": "/?action=receive"
+    },
+    {
+      "name": "Обменять",
+      "short_name": "Swap",
+      "description": "Обмен через DEX",
+      "url": "/?action=swap"
+    }
+  ]
 }

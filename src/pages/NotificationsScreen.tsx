@@ -1,101 +1,44 @@
 import React from 'react';
 import { useStore } from '../lib/store';
-import { timeAgo, haptic } from '../lib/utils';
-import { dbMarkNotifRead } from '../lib/db';
-import { ArrowLeftIcon, SendIcon, DownloadIcon, BellIcon, StarIcon } from '../components/Icons';
+import { haptic, formatTimeAgo } from '../lib/utils';
+import { ArrowLeftIcon } from '../components/Icons';
 
-const TYPE_ICONS: Record<string, React.ComponentType<any>> = {
-  transfer: SendIcon,
-  deposit: DownloadIcon,
-  system: BellIcon,
-  promo: StarIcon,
+const getIcon = (type: string) => {
+  switch (type) {
+    case 'transaction': return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>;
+    case 'system': return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>;
+    case 'service': return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>;
+    case 'support': return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>;
+    default: return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>;
+  }
 };
 
 export default function NotificationsScreen() {
-  const { notifs, readNotif, go } = useStore();
+  const { go, back, notifications, markRead } = useStore();
 
-  const handleRead = (id: string) => {
-    haptic('light');
-    readNotif(id);
-    dbMarkNotifRead(id).catch(() => {});
-  };
+  const handleMarkAllRead = () => { notifications.forEach(n => { if (!n.read) markRead(n.id); }); haptic('light'); };
 
   return (
-    <div className="h-full overflow-y-auto pb-24 safe-top">
-      {/* Header */}
-      <div className="px-5 pt-4 pb-2 flex items-center gap-4">
-        <button onClick={() => go('home')} className="text-white/50">
-          <ArrowLeftIcon size={20} />
-        </button>
-        <h1 className="font-bold flex-1">Уведомления</h1>
+    <div className="page safe-top">
+      <div className="header">
+        <button onClick={() => { haptic('light'); back(); }} className="back-btn"><ArrowLeftIcon size={18} color="var(--text)" /></button>
+        <p className="header-title">Notifications</p>
+        {notifications.some(n => !n.read) && <button onClick={handleMarkAllRead} className="text-xs text-[var(--accent)] ml-auto">Mark all read</button>}
       </div>
-
-      <div className="px-5 mt-4">
-        {notifs.length === 0 ? (
-          /* Empty state */
-          <div className="text-center py-20 animate-fade-in">
-            <div className="w-16 h-16 rounded-2xl glass flex items-center justify-center mx-auto mb-4">
-              <BellIcon size={28} color="rgba(255,255,255,0.3)" />
+      <div className="px-4 mt-4 space-y-1">
+        {notifications.length === 0 ? (
+          <div className="py-16 text-center"><p className="text-sm text-[var(--text-tertiary)]">No notifications</p></div>
+        ) : notifications.map(n => (
+          <button key={n.id} onClick={() => { markRead(n.id); haptic('light'); }}
+            className={`w-full flex items-start gap-3 p-3.5 rounded-xl transition-all text-left ${!n.read ? 'bg-[var(--accent)]/5' : 'active:bg-[var(--bg-card)]'}`}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--bg-surface)] text-[var(--text-secondary)]">{getIcon(n.type)}</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">{n.title}</p>
+              <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{n.message}</p>
             </div>
-            <p className="text-white/35 font-medium">Нет уведомлений</p>
-            <p className="text-xs text-white/20 mt-1">
-              Здесь будут появляться переводы, пополнения и другие события
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {notifs.map((notif, i) => {
-              const Icon = TYPE_ICONS[notif.type] || BellIcon;
-              return (
-                <button
-                  key={notif.id}
-                  onClick={() => handleRead(notif.id)}
-                  className={`
-                    w-full glass p-4 flex items-start gap-3 text-left
-                    animate-slide-up transition-all
-                    ${notif.read ? 'opacity-50' : ''}
-                  `}
-                  style={{ animationDelay: `${i * 0.03}s` }}
-                >
-                  {/* Icon */}
-                  <div className={`
-                    w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
-                    ${notif.type === 'transfer' ? 'bg-blue-500/10' :
-                      notif.type === 'deposit' ? 'bg-emerald-500/10' :
-                      notif.type === 'promo' ? 'bg-yellow-500/10' :
-                      'bg-white/5'}
-                  `}>
-                    <Icon
-                      size={18}
-                      color={
-                        notif.type === 'transfer' ? '#60a5fa' :
-                        notif.type === 'deposit' ? '#34d399' :
-                        notif.type === 'promo' ? '#fbbf24' :
-                        'rgba(255,255,255,0.4)'
-                      }
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">{notif.title}</p>
-                    <p className="text-[11px] text-white/30 mt-0.5 truncate">
-                      {notif.message}
-                    </p>
-                    <p className="text-[10px] text-white/20 mt-1">
-                      {timeAgo(notif.created_at)}
-                    </p>
-                  </div>
-
-                  {/* Unread dot */}
-                  {!notif.read && (
-                    <div className="w-2 h-2 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
+            {!n.read && <div className="w-2 h-2 rounded-full bg-[var(--accent)] mt-1.5 shrink-0" />}
+          </button>
+        ))}
       </div>
     </div>
   );

@@ -3,77 +3,57 @@ import { useStore } from '../lib/store';
 import { haptic } from '../lib/utils';
 import { ArrowLeftIcon } from '../components/Icons';
 
-const FAQ_ITEMS = [
-  { q: 'Как открыть счёт?', a: 'Счета → «+ Открыть» → выберите тип → заполните данные → подпишите договор электронной подписью.' },
-  { q: 'Как пополнить счёт?', a: 'На странице счёта → «Пополнить» → купить за крипту через TON-кошелёк или получить перевод.' },
-  { q: 'Как перевести деньги?', a: '«Переводы» → найти по @username или Luna ID → выбрать счёт и сумму → подтвердить.' },
-  { q: 'Какие комиссии?', a: 'Free: 0.5%, Plus: 0.3%, Cosmic: 0%. Автоматически рассчитывается от суммы.' },
-  { q: 'Что такое LNC?', a: 'Luna Coin — внутренняя валюта. 1 LNC = $0.05 (5 центов). Для переводов, подписок, покупок.' },
-  { q: 'Как подключить TON-кошелёк?', a: 'Профиль → TON-кошелёк. Поддерживаются Tonkeeper, MyTonWallet, Wallet, Tonhub.' },
-  { q: 'Как пройти KYC?', a: 'Профиль → Верификация → 8 шагов → лимиты до $50,000/мес после одобрения.' },
-  { q: 'Как оформить карту?', a: 'Страница счёта → «Оформить карту». Виртуальная $0, премиум $4.99, пластик $19.99.' },
-  { q: 'Как сменить PIN?', a: 'Профиль → Безопасность → Сменить PIN.' },
-  { q: 'Как работает гарант-сервис?', a: 'Создайте сделку → средства замораживаются → продавец доставляет → вы подтверждаете → деньги уходят продавцу.' },
-  { q: 'Что такое Luna City?', a: 'Мини-игры: выбирайте профессии, играйте и зарабатывайте реальные LNC на свой счёт.' },
-  { q: 'Как связаться с поддержкой?', a: '«Чаты» → «Поддержка». AI-бот ответит на вопросы, при необходимости подключит оператора.' },
+const FAQ = [
+  { q: 'What is Luna Wallet?', a: 'Luna Wallet is a non-custodial crypto wallet built on the TON blockchain. You can send, receive, swap, and manage your crypto assets securely.' },
+  { q: 'How do I connect my wallet?', a: 'Tap "Connect Wallet" on the home screen. Choose your preferred wallet app (Tonkeeper, Tonhub, etc.) and scan the QR code or approve the connection.' },
+  { q: 'What is a seed phrase?', a: 'A 12-word seed phrase is the master key to your wallet. It gives you full access to your funds. Never share it with anyone. Store it offline in a secure place.' },
+  { q: 'How do I send TON?', a: 'Go to Send, enter the recipient address, enter the amount, review the details, and confirm. Your wallet app will ask you to approve the transaction.' },
+  { q: 'How long do transactions take?', a: 'TON blockchain transactions are confirmed in 1-5 seconds. It\'s one of the fastest blockchains in the world.' },
+  { q: 'What can I do with my wallet?', a: 'Send and receive TON and USDT, swap tokens via DEX, trade P2P, buy crypto services, view NFTs, and more.' },
+  { q: 'What are the fees?', a: 'Network fee is ~0.005 TON per transaction. USDT transfers also require a small TON fee for processing. No hidden Luna Wallet fees.' },
+  { q: 'How do I buy services?', a: 'Go to the Services tab, select a service (Netflix, ChatGPT, VPN, etc.), choose a plan, and pay with USDT or TON. You\'ll receive an activation code instantly.' },
+  { q: 'Is my wallet safe?', a: 'Yes. Your private keys never leave your wallet app. We use TON Connect, the most secure connection protocol for TON dApps.' },
+  { q: 'How do I get support?', a: 'Open a support ticket in the app. Business subscribers get 24/7 personal manager support.' },
+  { q: 'How do I import my wallet?', a: 'Go to Settings > Seed Phrase > Import. Enter your 12 words in order. Your wallet will be restored from the blockchain.' },
+  { q: 'What is an NFT?', a: 'NFTs are unique digital assets on the blockchain. You can view your NFTs in the NFT Gallery section. Supported collections from GetGems, Fragment, and more.' },
+  { q: 'Can I swap tokens?', a: 'Yes. Go to Swap, select the token you want to trade and the token you want to receive. We aggregate rates from STON.fi and DeDust to find the best price.' },
+  { q: 'What is P2P trading?', a: 'P2P (peer-to-peer) trading lets you buy and sell crypto directly with other users. Pay with bank transfer or cash. No middleman.' },
+  { q: 'What is Klikopolic Co.?', a: 'Klikopolic Co. is the company behind Luna Wallet. We build secure crypto products for the TON ecosystem.' },
 ];
 
 export default function FAQScreen() {
-  const { go } = useStore();
-  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const { go, back } = useStore();
+  const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <div className="h-full overflow-y-auto pb-24 safe-top">
-      {/* Header */}
-      <div className="px-5 pt-4 pb-2 flex items-center gap-4">
-        <button onClick={() => go('profile')} className="text-white/50">
-          <ArrowLeftIcon size={20} />
-        </button>
-        <h1 className="font-bold flex-1">Частые вопросы</h1>
+    <div className="page safe-top">
+      <div className="header">
+        <button onClick={() => { haptic('light'); back(); }} className="back-btn"><ArrowLeftIcon size={18} color="var(--text)" /></button>
+        <p className="header-title">FAQ</p>
       </div>
-
-      {/* FAQ Accordion */}
-      <div className="px-5 mt-4 space-y-2">
-        {FAQ_ITEMS.map((item, i) => (
-          <div
-            key={i}
-            className="glass overflow-hidden animate-slide-up"
-            style={{ animationDelay: `${i * 0.03}s` }}
-          >
-            {/* Question */}
-            <button
-              onClick={() => {
-                haptic('light');
-                setOpenIdx(openIdx === i ? null : i);
-              }}
-              className="w-full p-4 flex items-center gap-3 text-left"
-            >
-              <div className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center text-xs text-white/40 flex-shrink-0">
-                ?
-              </div>
-              <span className="flex-1 text-[13px] font-medium">
-                {item.q}
-              </span>
-              <span
-                className={`
-                  text-white/20 transition-transform text-xs
-                  ${openIdx === i ? 'rotate-180' : ''}
-                `}
-              >
-                ▼
-              </span>
+      <div className="px-4 mt-4 space-y-1">
+        {FAQ.map((item, i) => (
+          <div key={i} className="card overflow-hidden">
+            <button onClick={() => { setOpen(open === i ? null : i); haptic('light'); }}
+              className="w-full px-4 py-3.5 flex items-center justify-between text-left active:bg-[var(--bg-card-hover)] transition-all">
+              <p className="text-sm font-medium flex-1 pr-4">{item.q}</p>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                className={`transition-transform duration-200 ${open === i ? 'rotate-180' : ''}`}>
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
             </button>
-
-            {/* Answer */}
-            {openIdx === i && (
-              <div className="px-4 pb-4 pt-0 animate-fade-in">
-                <p className="text-[13px] text-white/50 leading-relaxed pl-9">
-                  {item.a}
-                </p>
+            {open === i && (
+              <div className="px-4 pb-4">
+                <div className="divider mb-3" />
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{item.a}</p>
               </div>
             )}
           </div>
         ))}
+      </div>
+      <div className="px-4 mt-8 mb-4 text-center">
+        <p className="text-xs text-[var(--text-tertiary)]">Powered by Klikopolic Co.</p>
+        <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">Luna Wallet v2.0</p>
       </div>
     </div>
   );

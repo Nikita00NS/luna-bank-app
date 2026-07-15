@@ -1,178 +1,140 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useStore } from '../lib/store';
-import { haptic } from '../lib/utils';
-import { ArrowLeftIcon, TrendingUpIcon } from '../components/Icons';
-import AnimatedEmoji from '../components/AnimatedEmoji';
-
-interface CoinPrice {
-  id: string;
-  symbol: string;
-  name: string;
-  current_price: number;
-  price_change_percentage_24h: number;
-  market_cap: number;
-  image: string;
-  sparkline_in_7d?: { price: number[] };
-}
-
-const WATCHED_COINS = ['bitcoin', 'ethereum', 'the-open-network', 'tether', 'solana', 'dogecoin', 'ripple', 'cardano'];
+import { getTop, CoinData } from '../lib/coingecko';
+import { formatUsd, haptic } from '../lib/utils';
+import { RefreshIcon, SearchIcon } from '../components/Icons';
+import PriceChart from '../components/PriceChart';
 
 export default function PortfolioScreen() {
-  const { user, accounts, go } = useStore();
-  const [prices, setPrices] = useState<CoinPrice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'portfolio' | 'watchlist'>('portfolio');
-  const [lastUpdate, setLastUpdate] = useState('');
+  const { go, tokens } = useStore();
+  const [coins, setCoins] = useState<CoinData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
 
-  if (!user) return null;
-
-  useEffect(() => { fetchPrices(); }, []);
-
-  const fetchPrices = async () => {
+  const fetchCoins = async () => {
     setLoading(true);
-    try {
-      const resp = await fetch(
-        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${WATCHED_COINS.join(',')}&order=market_cap_desc&sparkline=true&price_change_percentage=24h`
-      );
-      if (resp.ok) {
-        const data = await resp.json();
-        setPrices(data);
-        setLastUpdate(new Date().toLocaleTimeString('ru-RU'));
-      }
-    } catch (err) {
-      console.warn('[Portfolio] CoinGecko error:', err);
-    }
+    const data = await getTop(30);
+    setCoins(data);
     setLoading(false);
   };
 
-  // Calculate portfolio value from accounts
-  const symbolMap: Record<string, string> = { TON: 'the-open-network', BTC: 'bitcoin', ETH: 'ethereum', USDT: 'tether' };
-  const portfolio = accounts
-    .filter((a) => symbolMap[a.currency])
-    .map((a) => {
-      const coin = prices.find((p) => p.id === symbolMap[a.currency]);
-      const value = a.balance * (coin?.current_price || 0);
-      return { ...a, coinData: coin, value };
-    })
-    .filter((a) => a.balance > 0 || a.coinData);
+  useEffect(() => { fetchCoins(); }, []);
 
-  const totalValue = portfolio.reduce((s, p) => s + p.value, 0);
+  const filteredCoins = useMemo(() =>
+    coins.filter(c =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.symbol.toLowerCase().includes(search.toLowerCase())
+    ), [coins, search]
+  );
 
-  const formatPrice = (n: number) => {
-    if (n >= 1000) return `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    if (n >= 1) return `$${n.toFixed(2)}`;
-    return `$${n.toFixed(4)}`;
-  };
+  const userPortfolio = useMemo(() =>
+    tokens.map(t => {
+      const marketCoin = coins.find(c => c.symbol.toLowerCase() === t.symbol.toLowerCase());
+      return {
+        ...t,
+        priceUsd: marketCoin?.current_price || t.priceUsd || 0,
+        priceChange24h: marketCoin?.price_change_24h || t.priceChange24h || 0,
+        marketCap: marketCoin?.market_cap || 0,
+        image: marketCoin?.image || '',
+      };
+    }), [tokens, coins]
+  );
 
-  const formatCap = (n: number) => {
-    if (n >= 1e12) return `$${(n / 1e12).toFixed(1)}T`;
-    if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
-    if (n >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
-    return `$${n.toLocaleString()}`;
-  };
+  const totalPortfolioValue = useMemo(() =>
+    userPortfolio.reduce((s, t) => s + t.balance * t.priceUsd, 0), [userPortfolio]
+  );
 
   return (
-    <div className="h-full flex flex-col bg-black safe-top">
-      <div className="px-5 pt-4 pb-2 flex items-center gap-4">
-        <button onClick={() => go('home')} className="text-white/50"><ArrowLeftIcon size={20} /></button>
-        <h1 className="font-bold flex-1">Крипто-портфель</h1>
-        <button onClick={() => { fetchPrices(); haptic('light'); }} className={`glass rounded-full w-8 h-8 flex items-center justify-center text-xs ${loading ? 'animate-spin' : ''}`}>🔄</button>
+    <div className="page safe-top">
+      <div className="header">
+        <p className="header-title">Portfolio</p>
+        <button onClick={fetchCoins}
+          className="w-9 h-9 rounded-lg flex items-center justify-center active:bg-[var(--bg-card)] transition-all">
+          <RefreshIcon size={16} color={loading ? 'var(--accent)' : 'var(--text-tertiary)'} />
+        </button>
       </div>
 
-      {/* Total value */}
-      <div className="px-5 mt-2">
-        <div className="glass-accent p-5 rounded-2xl">
-          <p className="text-xs text-white/35 uppercase tracking-wide">Портфель</p>
-          <p className="text-3xl font-extrabold mono mt-1">${totalValue.toFixed(2)}</p>
-          {lastUpdate && <p className="text-[9px] text-white/20 mt-1">Обновлено: {lastUpdate}</p>}
+      <div className="px-4 mt-2">
+        <div className="relative">
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search coins..." className="input pl-10 text-sm" />
+          <SearchIcon size={16} color="var(--text-tertiary)" className="absolute left-3.5 top-1/2 -translate-y-1/2" />
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="px-5 mt-3 flex gap-2">
-        {(['portfolio', 'watchlist'] as const).map((t) => (
-          <button key={t} onClick={() => { setTab(t); haptic('light'); }}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${tab === t ? 'bg-white text-black' : 'glass text-white/50'}`}>
-            {t === 'portfolio' ? '💼 Мои активы' : '📊 Рынок'}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-5 pb-24 mt-3">
-        {loading ? (
-          <div className="text-center py-10">
-            <AnimatedEmoji type="loading" size={32} />
-            <p className="text-white/30 text-sm mt-3">Загрузка цен...</p>
-          </div>
-        ) : tab === 'portfolio' ? (
-          <div className="space-y-2 animate-fade-in">
-            {portfolio.length === 0 ? (
-              <div className="text-center py-10">
-                <AnimatedEmoji type="wallet" size={48} />
-                <p className="text-white/30 text-sm mt-3">Нет крипто-активов</p>
-                <button onClick={() => go('ton-connect')} className="btn-primary mt-4 px-6">Подключить кошелёк</button>
-              </div>
-            ) : (
-              portfolio.map((p, i) => {
-                const change = p.coinData?.price_change_percentage_24h || 0;
-                const pos = change >= 0;
-                return (
-                  <div key={p.id} className="glass p-4 rounded-2xl animate-slide-up" style={{ animationDelay: `${i * 0.05}s` }}>
-                    <div className="flex items-center gap-3">
-                      {p.coinData?.image && <img src={p.coinData.image} alt="" className="w-8 h-8 rounded-full" />}
-                      <div className="flex-1">
-                        <p className="font-bold text-sm">{p.currency}</p>
-                        <p className="text-[10px] text-white/25">{p.coinData?.name}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold mono text-sm">{formatPrice(p.coinData?.current_price || 0)}</p>
-                        <p className={`text-[10px] mono ${pos ? 'text-emerald-400' : 'text-red-400'}`}>{pos ? '+' : ''}{change.toFixed(1)}%</p>
-                      </div>
-                    </div>
-                    <div className="flex justify-between mt-2 pt-2 border-t border-white/[0.04] text-xs">
-                      <span className="text-white/25">Баланс: {p.balance.toFixed(4)} {p.currency}</span>
-                      <span className="mono font-bold">${p.value.toFixed(2)}</span>
-                    </div>
+      {userPortfolio.length > 0 && (
+        <section className="px-4 mt-5">
+          <h3 className="text-xs font-medium text-[var(--text-tertiary)] mb-2">My Portfolio</h3>
+          <div className="card p-4">
+            <p className="text-2xl font-bold mono">{formatUsd(totalPortfolioValue)}</p>
+            <div className="mt-3 space-y-2">
+              {userPortfolio.map((t) => (
+                <div key={t.symbol} className="flex items-center justify-between py-1">
+                  <div className="flex items-center gap-2">
+                    {t.image ? (
+                      <img src={t.image} alt="" className="w-5 h-5 rounded-full" />
+                    ) : null}
+                    <span className="text-sm font-medium">{t.symbol}</span>
+                    <span className="text-xs text-[var(--text-tertiary)]">{t.balance.toFixed(4)}</span>
                   </div>
-                );
-              })
-            )}
+                  <div className="text-right">
+                    <p className="text-sm font-medium">${(t.balance * t.priceUsd).toFixed(2)}</p>
+                    {t.priceChange24h !== 0 && (
+                      <p className={`text-[10px] ${t.priceChange24h >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
+                        {t.priceChange24h >= 0 ? '+' : ''}{t.priceChange24h.toFixed(2)}%
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+        </section>
+      )}
+
+      <section className="px-4 mt-5">
+        <h3 className="text-xs font-medium text-[var(--text-tertiary)] mb-3">Market <span className="text-[10px]">CoinGecko</span></h3>
+
+        {loading && coins.length === 0 ? (
+          <div className="space-y-2">{[1,2,3,4,5].map(i => <div key={i} className="skeleton h-14 w-full" />)}</div>
         ) : (
-          <div className="space-y-2 animate-fade-in">
-            {prices.map((coin, i) => {
-              const pos = coin.price_change_percentage_24h >= 0;
-              const sparkline = coin.sparkline_in_7d?.price || [];
-              const max = Math.max(...sparkline), min = Math.min(...sparkline), range = max - min || 1;
-              const pts = sparkline.filter((_, j) => j % 4 === 0).map((v, j, arr) =>
-                `${(j / (arr.length - 1)) * 80},${25 - ((v - min) / range) * 20}`
-              ).join(' ');
-
+          <div className="space-y-1">
+            {filteredCoins.map((coin) => {
+              const isSelected = selectedCoin === coin.id;
               return (
-                <div key={coin.id} className="glass p-3 flex items-center gap-3 rounded-xl animate-slide-up" style={{ animationDelay: `${i * 0.04}s` }}>
-                  <img src={coin.image} alt="" className="w-8 h-8 rounded-full" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm">{coin.name}</p>
-                    <p className="text-[9px] text-white/20 uppercase">{coin.symbol} · {formatCap(coin.market_cap)}</p>
-                  </div>
-                  {sparkline.length > 0 && (
-                    <svg width="80" height="25" className="opacity-50 shrink-0">
-                      <polyline fill="none" stroke={pos ? '#34d399' : '#f87171'} strokeWidth="1.5" points={pts} />
-                    </svg>
+                <div key={coin.id}>
+                  <button onClick={() => { setSelectedCoin(isSelected ? null : coin.id); haptic('light'); }}
+                    className="w-full card p-3 flex items-center gap-3 active:scale-[0.98] transition-all">
+                    {coin.image ? (
+                      <img src={coin.image} alt="" className="w-8 h-8 rounded-full" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-[var(--bg-card)]">
+                        {coin.symbol.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="font-semibold text-sm">{coin.symbol.toUpperCase()}</p>
+                      <p className="text-[11px] truncate text-[var(--text-tertiary)]">{coin.name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-sm">${coin.current_price.toLocaleString()}</p>
+                      <p className={`text-[11px] ${coin.price_change_24h >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
+                        {coin.price_change_24h >= 0 ? '+' : ''}{coin.price_change_24h.toFixed(2)}%
+                      </p>
+                    </div>
+                  </button>
+                  {isSelected && (
+                    <div className="card p-3 mt-1 mb-1 flex justify-center">
+                      <PriceChart coinId={coin.id} days={7} width={280} height={80} />
+                    </div>
                   )}
-                  <div className="text-right shrink-0">
-                    <p className="font-bold mono text-sm">{formatPrice(coin.current_price)}</p>
-                    <p className={`text-[10px] mono ${pos ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {pos ? '+' : ''}{coin.price_change_percentage_24h.toFixed(1)}%
-                    </p>
-                  </div>
                 </div>
               );
             })}
-            <p className="text-center text-[9px] text-white/15 mt-2">Данные: CoinGecko API (реальные цены)</p>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

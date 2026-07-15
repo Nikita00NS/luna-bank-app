@@ -1,275 +1,179 @@
-import React, { useState } from 'react';
-import { useStore } from '../lib/store';
-import { formatMoney, balanceInUsd, haptic, getGreeting } from '../lib/utils';
-import { CURRENCIES, LNC_RATE_USD, CRYPTO_PRICES } from '../lib/constants';
-import Logo from '../components/Logo';
-import LncIcon from '../components/LncIcon';
-import AnimatedEmoji from '../components/AnimatedEmoji';
-import {
-  SendIcon, DownloadIcon, SwapIcon, DiamondIcon,
-  ChartIcon, ShieldIcon, ReceiptIcon, TrendingUpIcon,
-  BellIcon, SearchIcon,
-} from '../components/Icons';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useStore, TokenBalance } from '../lib/store';
+import { fetchTonBalance, fetchJettons, shortAddress, fetchTransactions } from '../lib/ton';
+import { getPrice } from '../lib/coingecko';
+import { formatCrypto, formatUsd, haptic } from '../lib/utils';
+import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
+import { SendIcon, DownloadIcon, SwapIcon, ScanIcon } from '../components/Icons';
 
 export default function HomeScreen() {
-  const {
-    user, accounts, go, notifs, txs,
-    dispCurrency, setDispCurrency,
-    walletJettons, tonWallet,
-  } = useStore();
-  const [hiddenTokens, setHiddenTokens] = useState<Set<string>>(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('luna-hidden-tokens') || '[]')); } catch { return new Set(); }
-  });
-  const [editingTokens, setEditingTokens] = useState(false);
+  const { tonWallet, tokens, setTokens, setTonWallet, go, txs, setTxs, loading, setLoading, hiddenTokens, totalUsdBalance, balanceVisible, toggleBalanceVisibility, setLastSync, selTx } = useStore();
+  const [tonConnectUI] = useTonConnectUI();
+  const tonWalletRaw = useTonWallet();
+  const [refreshing, setRefreshing] = useState(false);
 
-  const greeting = getGreeting();
-  const unreadCount = notifs.filter((n) => !n.read).length;
+  useEffect(() => {
+    if (tonWalletRaw?.account?.address) {
+      const addr = tonWalletRaw.account.address;
+      const raw = tonWalletRaw as any;
+      if (addr !== tonWallet) setTonWallet(addr, raw.name || 'Wallet');
+    }
+  }, [tonWalletRaw]);
 
-  if (!user) return null;
+  const syncAll = useCallback(async () => {
+    if (!tonWallet) return;
+    setLoading(true);
+    try {
+      const [tonBal, jettons, recentTxs] = await Promise.all([fetchTonBalance(tonWallet), fetchJettons(tonWallet), fetchTransactions(tonWallet, 10)]);
+      const list: TokenBalance[] = [];
+      if (tonBal.ok) list.push({ symbol: 'TON', name: 'Toncoin', balance: tonBal.balance, decimals: 9, address: 'native', verified: true });
+      for (const j of jettons) list.push(j);
+      try { const p = await getPrice('the-open-network'); if (p) list.forEach(t => { if (t.symbol === 'TON') { t.priceUsd = p.current_price; t.priceChange24h = p.price_change_24h; } }); } catch {}
+      setTokens(list);
+      setTxs(recentTxs.map(tx => ({ hash: tx.hash, lt: tx.lt, timestamp: tx.timestamp, fee: tx.fee, from: tx.from, to: tx.to, value: tx.value, symbol: 'TON', comment: tx.comment, status: 'completed' as const })));
+      setLastSync(Date.now());
+    } catch (err) { console.warn('[Home]', err); }
+    setLoading(false);
+  }, [tonWallet]);
 
-  // Total portfolio value in USD
-  const accountsUsd = accounts.reduce((sum, acc) => sum + balanceInUsd(acc.balance, acc.currency), 0);
-  const jettonsUsd = walletJettons.reduce((sum, j) => {
-    if (j.symbol === 'USD₮' || j.symbol === 'USDT') return sum + j.balance;
-    return sum; // other jettons — no reliable USD price
-  }, 0);
-  const totalUsd = accountsUsd + jettonsUsd;
+  useEffect(() => { syncAll(); }, [syncAll]);
 
-  // Merge accounts + jettons into one token list
-  const allTokens = [
-    ...accounts.map((a) => ({
-      id: `acc-${a.id}`,
-      symbol: a.currency,
-      name: a.name,
-      balance: a.balance,
-      usdValue: balanceInUsd(a.balance, a.currency),
-      image: undefined as string | undefined,
-      isAccount: true,
-    })),
-    ...walletJettons
-      .filter((j) => !accounts.some((a) => (a.currency === 'USDT' && (j.symbol === 'USD₮' || j.symbol === 'USDT')) || (a.currency === 'TON' && j.symbol === 'TON')))
-      .map((j) => ({
-        id: `jet-${j.symbol}`,
-        symbol: j.symbol,
-        name: j.name,
-        balance: j.balance,
-        usdValue: j.symbol === 'USD₮' || j.symbol === 'USDT' ? j.balance : 0,
-        image: j.image,
-        isAccount: false,
-      })),
-  ].filter((t) => !hiddenTokens.has(t.id));
+  const handleRefresh = async () => { setRefreshing(true); haptic('medium'); await syncAll(); setTimeout(() => setRefreshing(false), 500); };
+  const handleConnect = async () => { haptic('medium'); try { await tonConnectUI.openModal(); } catch {} };
 
-  const toggleHideToken = (id: string) => {
-    const next = new Set(hiddenTokens);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setHiddenTokens(next);
-    localStorage.setItem('luna-hidden-tokens', JSON.stringify([...next]));
-  };
-
-  // Currency cycling
-  const currencyKeys = Object.keys(CURRENCIES);
-  const cycleCurrency = () => {
-    haptic('light');
-    const idx = currencyKeys.indexOf(dispCurrency);
-    setDispCurrency(currencyKeys[(idx + 1) % currencyKeys.length]);
-  };
-
-  const quickActions = [
-    { Icon: SendIcon, label: 'Перевод', page: 'transfer' as const },
-    { Icon: DownloadIcon, label: 'Пополнить', page: 'deposit' as const },
-    { Icon: SwapIcon, label: 'Обмен', page: 'swap' as const },
-    { Icon: DiamondIcon, label: 'TON', page: 'ton-connect' as const },
-  ];
+  const visibleTokens = tokens.filter(t => !hiddenTokens.includes(t.symbol));
 
   return (
-    <div className="h-full overflow-y-auto pb-24 safe-top">
-      {/* ===== Header ===== */}
-      <header className="px-5 pt-4 pb-2 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={() => { haptic('light'); go('profile'); }}>
-            {user.photo_url ? (
-              <img src={user.photo_url} alt="" className="w-11 h-11 rounded-full ring-1 ring-white/10" />
-            ) : (
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-lg font-bold">
-                {user.first_name[0]}
-              </div>
-            )}
-          </button>
-          <div>
-            <p className="text-[11px] text-white/35">{greeting.text} {greeting.emoji}</p>
-            <p className="font-bold text-[15px] -mt-0.5">{user.first_name}</p>
+    <div className="page safe-top">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
           </div>
+          <span className="text-sm font-semibold">Luna</span>
         </div>
+        <div className="flex items-center gap-1.5">
+          <button onClick={handleRefresh} disabled={refreshing} className="w-8 h-8 rounded-lg flex items-center justify-center active:bg-[var(--bg-card)]">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={refreshing ? 'animate-spin' : ''}>
+              <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+          </button>
+          <button onClick={() => go('settings')} className="w-8 h-8 rounded-lg flex items-center justify-center active:bg-[var(--bg-card)]">
+            <div className="w-7 h-7 rounded-full bg-[var(--bg-card)] flex items-center justify-center text-[10px] font-medium text-[var(--text-secondary)]">U</div>
+          </button>
+        </div>
+      </div>
+
+      {/* Balance */}
+      <div className="px-4 mt-6">
+        <p className="text-xs text-[var(--text-tertiary)] mb-1">Total Balance</p>
         <div className="flex items-center gap-2">
-          <button onClick={cycleCurrency}
-            className="glass rounded-full px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 active:scale-95">
-            {CURRENCIES[dispCurrency]?.flag} {dispCurrency}
-          </button>
-          <button onClick={() => { haptic('light'); go('notifications'); }}
-            className="relative glass rounded-full w-10 h-10 flex items-center justify-center active:scale-95">
-            <AnimatedEmoji type="bell" size={22} />
-            {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-[9px] font-bold ring-2 ring-black">
-                {unreadCount}
-              </span>
-            )}
+          <p className="text-4xl font-bold mono tracking-tight">{balanceVisible ? `$${totalUsdBalance.toFixed(2)}` : '••••••'}</p>
+          <button onClick={toggleBalanceVisibility} className="text-xs text-[var(--text-tertiary)] px-2 py-1 rounded-lg active:bg-[var(--bg-card)] transition-all">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {balanceVisible ? <><path d="M1 12s4-8 11-8 11 8-4 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></> : <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></>}
+            </svg>
           </button>
         </div>
-      </header>
+        {tonWallet && <p className="text-xs text-[var(--text-tertiary)] mt-1.5 font-mono">{shortAddress(tonWallet)}</p>}
+        {!tonWallet && <p className="text-xs text-[var(--orange)] mt-1.5">Wallet not connected</p>}
+      </div>
 
-      {/* ===== Balance Card ===== */}
-      <section className="mx-5 mt-5 glass-accent p-6 rounded-2xl animate-slide-up">
-        <p className="text-xs text-white/40 uppercase tracking-widest mb-1">Общий баланс</p>
-        <p className="text-[42px] font-extrabold mono tracking-tighter leading-none">
-          {formatMoney(totalUsd, dispCurrency)}
-        </p>
-        <p className="text-sm text-white/30 mt-2">
-          {accounts.length} {accounts.length === 1 ? 'счёт' : accounts.length < 5 ? 'счёта' : 'счетов'}
-          {walletJettons.length > 0 && ` · ${walletJettons.length} токенов`}
-        </p>
+      {/* Quick Actions */}
+      <div className="flex gap-1 px-4 mt-8">
+        {[
+          { icon: SendIcon, label: 'Send', page: 'send' as const, color: 'var(--accent)' },
+          { icon: DownloadIcon, label: 'Receive', page: 'receive' as const, color: 'var(--green)' },
+          { icon: SwapIcon, label: 'Swap', page: 'swap' as const, color: 'var(--orange)' },
+          { icon: ScanIcon, label: 'Scan', page: 'qr-scan' as const, color: 'var(--text)' },
+        ].map(a => (
+          <button key={a.label} onClick={() => { if (!tonWallet && a.page !== 'receive') { handleConnect(); return; } haptic('light'); go(a.page); }}
+            className="flex flex-col items-center gap-1.5 flex-1 active:opacity-70 transition-all">
+            <div className="w-12 h-12 rounded-full bg-[var(--bg-card)] flex items-center justify-center border border-[var(--border)]">
+              <a.icon size={20} color={a.color} />
+            </div>
+            <span className="text-[10px] font-medium text-[var(--text-secondary)]">{a.label}</span>
+          </button>
+        ))}
+      </div>
 
-        {/* Quick Actions */}
-        <div className="flex justify-between mt-6 gap-2">
-          {quickActions.map((action) => (
-            <button key={action.label} onClick={() => { haptic('light'); go(action.page); }}
-              className="flex flex-col items-center gap-2 flex-1 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 transition-all">
-              <action.Icon size={22} color="rgba(255,255,255,0.7)" />
-              <span className="text-[11px] text-white/50 font-medium">{action.label}</span>
-            </button>
-          ))}
+      {/* Connect / Assets */}
+      {!tonWallet ? (
+        <div className="px-4 mt-8">
+          <button onClick={handleConnect} className="btn btn-primary">Connect Wallet</button>
+          <p className="text-xs text-[var(--text-tertiary)] text-center mt-3">Connect via Tonkeeper or other TON wallet</p>
         </div>
-      </section>
-
-      {/* ===== Tokens (horizontal scrollable + editable) ===== */}
-      <section className="mt-6">
-        <div className="px-5 flex items-center justify-between mb-3">
-          <h3 className="font-bold text-[15px]">Активы</h3>
-          <div className="flex items-center gap-2">
-            <button onClick={() => { setEditingTokens(!editingTokens); haptic('light'); }}
-              className={`text-xs font-medium active:scale-95 ${editingTokens ? 'text-blue-400' : 'text-white/30'}`}>
-              {editingTokens ? 'Готово' : '✏️ Ред.'}
-            </button>
-            {!tonWallet && (
-              <button onClick={() => { haptic('light'); go('ton-connect'); }}
-                className="text-xs text-blue-400 font-medium active:scale-95">
-                + Кошелёк
-              </button>
-            )}
-          </div>
-        </div>
-
-        {allTokens.length === 0 ? (
-          <div className="px-5">
-            <button onClick={() => { haptic('medium'); go('ton-connect'); }}
-              className="w-full glass p-8 flex flex-col items-center gap-3 rounded-2xl active:scale-[0.98]">
-              <AnimatedEmoji type="diamond" size={40} />
-              <p className="text-sm text-white/40">Подключите кошелёк</p>
-            </button>
-          </div>
-        ) : (
-          <div className="flex gap-2.5 overflow-x-auto px-5 pb-2 -mx-0 no-scrollbar">
-            {allTokens.map((token, i) => (
-              <div key={token.id} className="glass p-3.5 rounded-2xl min-w-[140px] max-w-[160px] shrink-0 relative animate-slide-up"
-                style={{ animationDelay: `${i * 0.04}s` }}>
-                {/* Edit mode — hide button */}
-                {editingTokens && (
-                  <button onClick={() => toggleHideToken(token.id)}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white z-10">✕</button>
-                )}
-
-                {/* Token icon */}
-                <div className="flex items-center gap-2 mb-2">
-                  {token.image ? (
-                    <img src={token.image} alt="" className="w-7 h-7 rounded-full" />
-                  ) : token.symbol === 'LNC' ? (
-                    <LncIcon size={20} />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-[10px] font-bold mono">
-                      {token.symbol.slice(0, 3)}
+      ) : (
+        <>
+          <div className="px-4 mt-8">
+            <p className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider mb-3">Assets</p>
+            {visibleTokens.length === 0 ? (
+              <div className="py-12 text-center"><p className="text-sm text-[var(--text-tertiary)]">No assets yet</p></div>
+            ) : (
+              <div className="space-y-0.5">
+                {visibleTokens.map((token, i) => (
+                  <button key={token.symbol} onClick={() => { haptic('light'); go('send'); }}
+                    className="w-full flex items-center gap-3 py-3 px-3 rounded-xl active:bg-[var(--bg-card)] transition-all">
+                    {token.image ? <img src={token.image} alt="" className="w-9 h-9 rounded-full" /> :
+                      <div className="w-9 h-9 rounded-full bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center text-xs font-bold text-[var(--text-secondary)]">{token.symbol.slice(0, 2)}</div>
+                    }
+                    <div className="flex-1 text-left min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium">{token.symbol}</p>
+                        {token.priceChange24h !== undefined && (
+                          <span className={`text-[10px] font-medium ${token.priceChange24h >= 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
+                            {token.priceChange24h >= 0 ? '+' : ''}{token.priceChange24h.toFixed(1)}%
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-[var(--text-tertiary)] truncate">{token.name}</p>
                     </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold truncate">{token.symbol}</p>
-                  </div>
-                </div>
-
-                {/* Balance */}
-                <p className="font-extrabold mono text-sm truncate">
-                  {token.balance < 0.01 ? token.balance.toFixed(6)
-                    : token.balance < 1000 ? token.balance.toFixed(2)
-                    : token.balance >= 1e6 ? `${(token.balance / 1e6).toFixed(1)}M`
-                    : token.balance.toFixed(0)}
-                </p>
-                {token.usdValue > 0 && (
-                  <p className="text-[10px] text-white/25 mono">${token.usdValue.toFixed(2)}</p>
-                )}
+                    <div className="text-right">
+                      <p className="text-sm font-medium mono">{formatCrypto(token.balance)}</p>
+                      {token.priceUsd ? <p className="text-xs text-[var(--text-tertiary)]">${(token.balance * token.priceUsd).toFixed(2)}</p> : null}
+                    </div>
+                  </button>
+                ))}
               </div>
-            ))}
-
-            {/* Add token */}
-            <button onClick={() => { haptic('light'); go('ton-connect'); }}
-              className="glass p-3.5 rounded-2xl min-w-[80px] shrink-0 flex flex-col items-center justify-center gap-1.5 active:scale-95">
-              <span className="text-xl text-white/20">+</span>
-              <span className="text-[9px] text-white/20">Ещё</span>
-            </button>
+            )}
           </div>
-        )}
-      </section>
 
-      {/* ===== Services ===== */}
-      <section className="px-5 mt-6">
-        <h3 className="font-bold text-[15px] mb-3">Сервисы</h3>
-        <div className="grid grid-cols-4 gap-2">
-          {([
-            { Icon: ChartIcon, label: 'Биржа', page: 'exchange' as const },
-            { Icon: ReceiptIcon, label: 'Платежи', page: 'payments' as const },
-            { Icon: ShieldIcon, label: 'Гарант', page: 'escrow' as const },
-            { Icon: TrendingUpIcon, label: 'P2P', page: 'p2p' as const },
-            { Icon: SwapIcon, label: 'Earn', page: 'earn' as const },
-            { Icon: DiamondIcon, label: 'Маркет', page: 'markets' as const },
-            { Icon: SendIcon, label: 'QR', page: 'qr' as const },
-            { Icon: SearchIcon, label: 'Копилки', page: 'savings' as const },
-          ]).map((item, i) => (
-            <button key={item.label} onClick={() => { haptic('light'); go(item.page); }}
-              className="glass p-3 flex flex-col items-center gap-1.5 active:scale-95 transition-all rounded-2xl animate-scale-in"
-              style={{ animationDelay: `${i * 0.04}s` }}>
-              <item.Icon size={20} color="rgba(255,255,255,0.5)" />
-              <span className="text-[10px] text-white/40 font-medium">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* ===== Recent Transactions ===== */}
-      {txs.length > 0 && (
-        <section className="px-5 mt-6 mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-[15px]">Последние операции</h3>
-            <button onClick={() => { haptic('light'); go('history'); }}
-              className="text-xs text-white/30 font-medium active:scale-95">Все →</button>
-          </div>
-          <div className="space-y-2">
-            {txs.slice(0, 5).map((tx) => {
-              const isOut = tx.from_user_id === user.telegram_id;
-              return (
-                <button key={tx.id} onClick={() => { haptic('light'); useStore.getState().selTx(tx.id); go('tx-detail'); }}
-                  className="w-full glass p-3 flex items-center gap-3 active:scale-[0.98] transition-all text-left rounded-xl">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg ${isOut ? 'bg-red-500/10' : 'bg-emerald-500/10'}`}>
-                    {tx.type === 'transfer' ? '📤' : tx.type === 'deposit' ? '📥' : tx.type === 'subscription' ? '⭐' : '💳'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{tx.note || tx.type}</p>
-                    <p className="text-[11px] text-white/30">{new Date(tx.created_at).toLocaleDateString('ru-RU')}</p>
-                  </div>
-                  <p className={`font-bold mono text-sm ${isOut ? 'text-red-400' : 'text-emerald-400'}`}>
-                    {isOut ? '-' : '+'}{formatMoney(balanceInUsd(tx.amount, tx.currency), 'USD')}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-        </section>
+          {/* Activity */}
+          {txs.length > 0 && (
+            <div className="px-4 mt-6 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">Activity</p>
+                <button onClick={() => go('history')} className="text-xs text-[var(--accent)]">View all</button>
+              </div>
+              <div className="space-y-0.5">
+                {txs.slice(0, 5).map((tx, i) => {
+                  const isIn = tx.to === tonWallet;
+                  return (
+                    <button key={tx.hash + i} onClick={() => { selTx(tx.hash); go('tx-detail'); }}
+                      className="w-full flex items-center gap-3 py-2.5 px-3 rounded-xl active:bg-[var(--bg-card)] transition-all">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isIn ? 'bg-[var(--green)]/10' : 'bg-[var(--red)]/10'}`}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isIn ? 'var(--green)' : 'var(--red)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          {isIn ? <polyline points="7 13 12 18 17 13" /> : <polyline points="17 11 12 6 7 11" />}
+                          <line x1="12" y1="18" x2="12" y2="6" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 text-left min-w-0">
+                        <p className="text-sm font-medium">{isIn ? 'Received' : 'Sent'}</p>
+                        <p className="text-xs text-[var(--text-tertiary)] truncate">{tx.comment || shortAddress(isIn ? tx.from : tx.to)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-sm font-medium mono ${isIn ? 'text-[var(--green)]' : ''}`}>{isIn ? '+' : '-'}{formatCrypto(tx.value)}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

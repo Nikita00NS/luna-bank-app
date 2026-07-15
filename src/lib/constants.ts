@@ -1,125 +1,80 @@
-// ===== LUNA BANK CONSTANTS =====
+// ===== LUNA WALLET — CONSTANTS =====
 
 export const PROJECT_WALLET = 'UQA9IgVuB-8GUVRttmh4zjhg5yFYXBMhGHWyt7ASJF1VuZJD';
 
-// 1 LNC = $0.05 (5 центов)
-export const LNC_RATE_USD = 0.05;
-
-// ===== Account Types =====
-export const ACCOUNT_TYPES = [
-  {
-    id: 'personal',
-    name: 'Личный',
-    currency: 'LNC',
-    icon: '👤',
-    requiresWallet: false,
-    desc: 'Основной счёт в Luna Coin',
+// ===== KNOWN TOKENS ON TON =====
+export const KNOWN_TOKENS: Record<string, {
+  symbol: string;
+  name: string;
+  decimals: number;
+  address: string;
+  coingeckoId?: string;
+}> = {
+  'TON': {
+    symbol: 'TON',
+    name: 'Toncoin',
+    decimals: 9,
+    address: 'native',
+    coingeckoId: 'the-open-network',
   },
-  {
-    id: 'business',
-    name: 'Бизнес',
-    currency: 'LNC',
-    icon: '💼',
-    requiresWallet: false,
-    desc: 'Для предпринимателей',
+  'USDT': {
+    symbol: 'USDT',
+    name: 'Tether USD',
+    decimals: 6,
+    address: 'EQCxE6mUtBJKFmn2kTORjOt1lZYcOKJfWQKxFs_s3A1NOI',
+    coingeckoId: 'tether',
   },
-  {
-    id: 'ton',
-    name: 'TON',
-    currency: 'TON',
-    icon: '💎',
-    requiresWallet: true,
-    desc: 'Крипто-счёт Toncoin',
+  'HMSTR': {
+    symbol: 'HMSTR',
+    name: 'Hamster Kombat',
+    decimals: 9,
+    address: 'EQD6s6s5s5s5s5s5s5s5s5s5s5s5s5s5s5s5s5s5s5s5s5',
+    coingeckoId: 'hamster-kombat',
   },
-  {
-    id: 'usdt',
-    name: 'USDT',
-    currency: 'USDT',
-    icon: '💵',
-    requiresWallet: true,
-    desc: 'Стейблкоин Tether',
+  'tsTON': {
+    symbol: 'tsTON',
+    name: 'Tonstakers TON',
+    decimals: 9,
+    address: 'EQCxE6mUtBJKFmn2kTORjOt1lZYcOKJfWQKxFs_s3A1NOI',
+    coingeckoId: 'tonstakers',
   },
-  {
-    id: 'bitcoin',
-    name: 'Bitcoin',
-    currency: 'BTC',
-    icon: '₿',
-    requiresWallet: true,
-    desc: 'Крипто-счёт Bitcoin',
-  },
-  {
-    id: 'ethereum',
-    name: 'Ethereum',
-    currency: 'ETH',
-    icon: 'Ξ',
-    requiresWallet: true,
-    desc: 'Крипто-счёт Ethereum',
-  },
-] as const;
-
-// ===== Card Designs =====
-export const CARD_DESIGNS = [
-  { id: 'classic', name: 'Classic', bg: 'linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', color: '#fff' },
-  { id: 'white', name: 'White', bg: 'linear-gradient(145deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%)', color: '#000' },
-  { id: 'gradient', name: 'Gradient', bg: 'linear-gradient(145deg, #7c3aed 0%, #a855f7 40%, #ec4899 100%)', color: '#fff' },
-  { id: 'night', name: 'Night', bg: 'linear-gradient(145deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%)', color: '#fff' },
-  { id: 'ocean', name: 'Ocean', bg: 'linear-gradient(145deg, #0c4a6e 0%, #0284c7 50%, #06b6d4 100%)', color: '#fff' },
-  { id: 'metal', name: 'Metal', bg: 'linear-gradient(145deg, #71717a 0%, #a1a1aa 30%, #71717a 60%, #a1a1aa 100%)', color: '#000' },
-] as const;
-
-// ===== Subscription Plans =====
-export const SUBSCRIPTION_PLANS = [
-  {
-    id: 'free',
-    name: 'Free',
-    price: 0,
-    commission: 0.5,
-    cashback: 0,
-    dailyLimit: 1000,
-    support: 'Чат',
-    icon: '🆓',
-  },
-  {
-    id: 'plus',
-    name: 'Plus',
-    price: 4.99,
-    commission: 0.3,
-    cashback: 1,
-    dailyLimit: 10000,
-    support: 'Приоритет',
-    icon: '⭐',
-  },
-  {
-    id: 'cosmic',
-    name: 'Cosmic',
-    price: 19.99,
-    commission: 0,
-    cashback: 3,
-    dailyLimit: Infinity,
-    support: 'VIP 24/7',
-    icon: '🚀',
-  },
-] as const;
-
-// ===== Display Currencies =====
-export const CURRENCIES: Record<string, { symbol: string; flag: string; rate: number }> = {
-  USD: { symbol: '$', flag: '🇺🇸', rate: 1 },
-  LNC: { symbol: '🌙', flag: '🌙', rate: 1 / LNC_RATE_USD },
-  RUB: { symbol: '₽', flag: '🇷🇺', rate: 89.5 },
-  EUR: { symbol: '€', flag: '🇪🇺', rate: 0.92 },
-  GBP: { symbol: '£', flag: '🇬🇧', rate: 0.79 },
-  CNY: { symbol: '¥', flag: '🇨🇳', rate: 7.24 },
-  JPY: { symbol: '¥', flag: '🇯🇵', rate: 149.5 },
-  TRY: { symbol: '₺', flag: '🇹🇷', rate: 32.1 },
-  KZT: { symbol: '₸', flag: '🇰🇿', rate: 449.0 },
-  UAH: { symbol: '₴', flag: '🇺🇦', rate: 41.2 },
 };
 
-// ===== Crypto Prices =====
-export const CRYPTO_PRICES: Record<string, number> = {
-  TON: 6.85,
-  BTC: 71250,
-  ETH: 3820,
-  USDT: 1.0,
-  LNC: LNC_RATE_USD,
+// ===== FIAT CURRENCIES =====
+export const FIAT_CURRENCIES = {
+  RUB: { symbol: '₽', name: 'Рубль', flag: '🇷🇺' },
+  USD: { symbol: '$', name: 'Dollar', flag: '🇺🇸' },
+  EUR: { symbol: '€', name: 'Euro', flag: '🇪🇺' },
 };
+
+// ===== PAYMENT METHODS =====
+export const PAYMENT_METHODS = [
+  'Сбербанк',
+  'Т-Банк',
+  'Альфа-Банк',
+  'ВТБ',
+  'Райффайзен',
+  'ЮMoney',
+  'Qiwi',
+  'Наличные',
+];
+
+// ===== DEX LIST =====
+export const DEX_LIST = [
+  { name: 'STON.fi', url: 'https://api.ston.fi/v1', icon: '🪨' },
+  { name: 'DeDust', url: 'https://api.dedust.io/v1', icon: '🌪️' },
+];
+
+// ===== EXCHANGE AGGREGATOR LIST =====
+export const EXCHANGES = [
+  { name: 'BestChange', url: 'https://bestchange.ru', icon: '🔄', rating: 4.8 },
+  { name: 'ChangeNOW', url: 'https://changenow.io', icon: '⚡', rating: 4.6 },
+  { name: 'SwapSpace', url: 'https://swapspace.co', icon: '🌐', rating: 4.5 },
+  { name: 'Exolix', url: 'https://exolix.com', icon: '💱', rating: 4.4 },
+  { name: 'SimpleSwap', url: 'https://simpleswap.io', icon: '🔄', rating: 4.3 },
+  { name: 'FixedFloat', url: 'https://fixedfloat.com', icon: '🔒', rating: 4.7 },
+];
+
+// ===== CHAIN EXPLORERS =====
+export const TON_EXPLORER = 'https://tonviewer.com';
+export const TON_EXPLORER_TX = 'https://tonviewer.com/transaction';

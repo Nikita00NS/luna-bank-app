@@ -1,90 +1,62 @@
-import { CURRENCIES, CRYPTO_PRICES, SUBSCRIPTION_PLANS, LNC_RATE_USD } from './constants';
-import type { SubscriptionPlan } from './store';
-
-// ===== Greeting =====
-export function getGreeting() {
-  const h = new Date().getHours();
-  if (h >= 5 && h < 12) return { text: 'Доброе утро', emoji: '☀️', gradient: 'from-amber-500/20 via-orange-400/10 to-transparent' };
-  if (h >= 12 && h < 17) return { text: 'Добрый день', emoji: '🌤️', gradient: 'from-sky-500/20 via-blue-400/10 to-transparent' };
-  if (h >= 17 && h < 22) return { text: 'Добрый вечер', emoji: '🌆', gradient: 'from-purple-500/20 via-pink-400/10 to-transparent' };
-  return { text: 'Доброй ночи', emoji: '🌙', gradient: 'from-indigo-900/30 via-slate-800/20 to-transparent' };
+export function formatCrypto(amount: number, decimals: number = 4): string {
+  if (amount === 0) return '0';
+  if (Math.abs(amount) >= 1_000_000) return `${(amount / 1_000_000).toFixed(2)}M`;
+  if (Math.abs(amount) >= 1_000) return `${(amount / 1_000).toFixed(2)}K`;
+  if (Math.abs(amount) < 0.0001) return amount.toExponential(2);
+  return amount.toFixed(decimals);
 }
 
-// ===== PIN Hashing =====
-export async function hashPin(pin: string, salt: string): Promise<string> {
-  const data = new TextEncoder().encode(pin + ':' + salt);
-  const buf = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+export function formatUsd(amount: number): string {
+  if (amount === 0) return '$0.00';
+  if (Math.abs(amount) >= 1_000_000) return `$${(amount / 1_000_000).toFixed(2)}M`;
+  if (Math.abs(amount) >= 1_000) return `$${(amount / 1_000).toFixed(2)}K`;
+  return `$${amount.toFixed(2)}`;
 }
 
-// ===== Money Formatting =====
-export function formatMoney(amountUSD: number, displayCurrency: string = 'USD'): string {
-  const c = CURRENCIES[displayCurrency];
-  if (!c) return `$${amountUSD.toFixed(2)}`;
-  const val = amountUSD * c.rate;
-  if (Math.abs(val) >= 1_000_000) return `${c.symbol}${(val / 1_000_000).toFixed(2)}M`;
-  if (Math.abs(val) >= 100_000) return `${c.symbol}${(val / 1_000).toFixed(1)}K`;
-  return `${c.symbol}${val.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+export function formatFiat(amount: number): string {
+  return `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
 }
 
-export function formatCrypto(amount: number, currency: string): string {
-  const map: Record<string, [string, number]> = {
-    BTC: ['₿', 8],
-    ETH: ['Ξ', 6],
-    TON: ['💎 ', 4],
-    USDT: ['$', 2],
-    LNC: ['🌙', 2],
-  };
-  const [sym, dec] = map[currency] || ['', 2];
-  return `${sym}${amount.toFixed(dec)}`;
+export function shortAddress(addr: string, chars: number = 4): string {
+  if (!addr || addr.length < 10) return addr || '';
+  return `${addr.slice(0, chars + 2)}…${addr.slice(-chars)}`;
 }
 
-export function balanceInUsd(balance: number, currency: string): number {
-  return balance * (CRYPTO_PRICES[currency] || 1);
-}
-
-// ===== Commission =====
-export function getCommission(plan: SubscriptionPlan, amount: number): number {
-  const p = SUBSCRIPTION_PLANS.find((s) => s.id === plan);
-  return p ? Math.round(amount * (p.commission / 100) * 100) / 100 : amount * 0.005;
-}
-
-// ===== Address shortener =====
-export function shortAddr(addr: string): string {
-  if (addr.length <= 12) return addr;
-  return addr.slice(0, 6) + '…' + addr.slice(-4);
-}
-
-// ===== Time ago =====
-export function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
+export function formatTimeAgo(timestamp: number): string {
+  const diff = Date.now() - timestamp * 1000;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'только что';
-  if (mins < 60) return `${mins} мин назад`;
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}ч назад`;
+  if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}д назад`;
-  return new Date(dateStr).toLocaleDateString('ru-RU');
+  if (days < 7) return `${days}d ago`;
+  return new Date(timestamp * 1000).toLocaleDateString();
 }
 
-// ===== Haptic feedback =====
+export function formatDate(timestamp: number): string {
+  return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  });
+}
+
+export async function copyToClipboard(text: string): Promise<boolean> {
+  try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
+}
+
 export function haptic(type: 'light' | 'medium' | 'heavy' | 'success' | 'error' = 'light') {
+  // Native haptic feedback via Capacitor (works on iOS/Android)
   try {
-    const tg = (window as any).Telegram?.WebApp;
-    if (tg?.HapticFeedback) {
-      if (type === 'success' || type === 'error') {
-        tg.HapticFeedback.notificationOccurred(type);
-      } else {
-        tg.HapticFeedback.impactOccurred(type);
-      }
+    const mod = (window as any).Capacitor?.Plugins?.Haptics;
+    if (mod) {
+      if (type === 'success') mod.notification({ type: 'SUCCESS' });
+      else if (type === 'error') mod.notification({ type: 'ERROR' });
+      else mod.impact({ style: type.toUpperCase() });
     }
-  } catch {
-    // silently fail outside Telegram
-  }
+    // Fallback: CSS vibration
+    else if (navigator.vibrate) {
+      if (type === 'success' || type === 'error') navigator.vibrate([50, 50, 50]);
+      else navigator.vibrate(10);
+    }
+  } catch {}
 }
