@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import { NativeBiometric } from '@capgo/capacitor-native-biometric';
 import { Preferences } from '@capacitor/preferences';
 import { haptic } from './utils';
 
@@ -19,12 +20,15 @@ export async function isBiometricAvailable(): Promise<{
     return { available: false, error: 'Not on native platform' };
   }
 
-  // Placeholder - in production use @capacitor-community/biometric or native biometric
-  return { 
-    available: true, 
-    biometryType: 'faceid',
-    error: 'Biometric requires @capacitor-community/biometric plugin' 
-  };
+  try {
+    const result = await NativeBiometric.isAvailable();
+    return {
+      available: result.isAvailable,
+      biometryType: String(result.biometryType || 'unknown'),
+    };
+  } catch (err) {
+    return { available: false, error: (err as Error).message };
+  }
 }
 
 export async function enableBiometric(): Promise<BiometricResult> {
@@ -34,6 +38,15 @@ export async function enableBiometric(): Promise<BiometricResult> {
   }
 
   try {
+    await NativeBiometric.verifyIdentity({
+      reason: 'Enable biometric login for Luna Wallet',
+      title: 'Luna Wallet',
+      subtitle: 'Secure access with biometrics',
+      description: 'Use Face ID / Touch ID / Fingerprint to unlock',
+      negativeButtonText: 'Cancel',
+      useFallback: false,
+    });
+
     await Preferences.set({ key: BIOMETRIC_ENABLED_KEY, value: 'true' });
     await Preferences.set({ key: BIOMETRIC_TYPE_KEY, value: biometryType || 'unknown' });
     
@@ -56,7 +69,15 @@ export async function authenticateWithBiometric(reason: string = 'Unlock Luna Wa
   }
 
   try {
-    // In production: use NativeBiometric.verifyIdentity()
+    await NativeBiometric.verifyIdentity({
+      reason,
+      title: 'Luna Wallet',
+      subtitle: 'Authenticate to access your wallet',
+      negativeButtonText: 'Cancel',
+      useFallback: true,
+      maxAttempts: 3,
+    });
+
     haptic('success');
     return { success: true };
   } catch (err) {
@@ -72,6 +93,7 @@ export async function authenticateWithBiometric(reason: string = 'Unlock Luna Wa
 
 export async function disableBiometric(): Promise<BiometricResult> {
   try {
+    await NativeBiometric.deleteCredentials({ server: 'luna-wallet' });
     await Preferences.remove({ key: BIOMETRIC_ENABLED_KEY });
     await Preferences.remove({ key: BIOMETRIC_TYPE_KEY });
     haptic('success');
@@ -82,12 +104,12 @@ export async function disableBiometric(): Promise<BiometricResult> {
 }
 
 export async function isBiometricEnabled(): Promise<boolean> {
-  const result = await Preferences.get({ key: 'biometric_enabled' });
+  const result = await Preferences.get({ key: BIOMETRIC_ENABLED_KEY });
   return result.value === 'true';
 }
 
 export async function getBiometricType(): Promise<string | null> {
-  const result = await Preferences.get({ key: 'biometric_type' });
+  const result = await Preferences.get({ key: BIOMETRIC_TYPE_KEY });
   return result.value || null;
 }
 

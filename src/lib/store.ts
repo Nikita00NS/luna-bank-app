@@ -8,7 +8,7 @@ export type Page =
   | 'aggregator' | 'token-detail' | 'nft-gallery' | 'notifications'
   | 'seed-phrase' | 'faq' | 'splash'
   | 'services' | 'service-pay' | 'virtual-cards' | 'service-history'
-  | 'admin' | 'admin-users' | 'admin-support' | 'admin-services' | 'admin-settings';
+  | 'admin' | 'admin-users' | 'admin-support' | 'admin-services' | 'admin-settings' | 'admin-revenue';
 
 export interface User {
   id: string;

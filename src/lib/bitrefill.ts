@@ -14,6 +14,7 @@ export interface BitrefillProduct {
   max_amount: number;
   category: string;
   brand: string;
+  sku: string;
 }
 
 export interface BitrefillOrderRequest {
@@ -35,6 +36,7 @@ export interface BitrefillOrderResponse {
   instructions?: string;
   expires_at?: string;
   created_at: string;
+  payload?: string;
 }
 
 export async function getBitrefillProducts(country: string = 'US'): Promise<BitrefillProduct[]> {
@@ -157,3 +159,6 @@ export const POPULAR_SERVICES = [
   { id: 'google-play', name: 'Google Play', category: 'mobile', bitrefillSlug: 'google-play' },
   { id: 'apple-app-store', name: 'Apple App Store', category: 'mobile', bitrefillSlug: 'apple-app-store' },
 ];
+
+// We earn commission on each service purchase (typically 3-10% depending on provider)
+export const BITREFILL_COMMISSION_RATE = 0.05; // 5% average
