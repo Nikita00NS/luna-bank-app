@@ -1,126 +1,20 @@
-import React, { useEffect } from 'react';
-import { useStore } from './lib/store';
-import BottomNav from './components/BottomNav';
-import { initTheme } from './pages/ThemesScreen';
+import React, { useState } from 'react';
 
-// Auth screens
-import SplashScreen from './pages/SplashScreen';
-import OnboardingScreen from './pages/OnboardingScreen';
-import WelcomeScreen from './pages/WelcomeScreen';
-
-// Main screens
-import HomeScreen from './pages/HomeScreen';
-import CardsScreen from './pages/CardsScreen';
-import AccountDetailScreen from './pages/AccountDetailScreen';
-import OpenAccountScreen from './pages/OpenAccountScreen';
-import TransferScreen from './pages/TransferScreen';
-import DepositScreen from './pages/DepositScreen';
-import ReceiveScreen from './pages/ReceiveScreen';
-import SwapScreen from './pages/SwapScreen';
-import ExchangeScreen from './pages/ExchangeScreen';
-import EarnScreen from './pages/EarnScreen';
-import EscrowScreen from './pages/EscrowScreen';
-
-// Content screens
-import NewsScreen from './pages/NewsScreen';
-import ChatScreen from './pages/ChatScreen';
-import SocialScreen from './pages/SocialScreen';
-import PaymentsScreen from './pages/PaymentsScreen';
-
-// Profile screens
-import ProfileScreen from './pages/ProfileScreen';
-import SubscriptionScreen from './pages/SubscriptionScreen';
-import KYCScreen from './pages/KYCScreen';
-import SettingsScreen from './pages/SettingsScreen';
-import NotificationsScreen from './pages/NotificationsScreen';
-import FAQScreen from './pages/FAQScreen';
-import AdminScreen from './pages/AdminScreen';
-import TonConnectScreen from './pages/TonConnectScreen';
-import MarketsScreen from './pages/MarketsScreen';
-import QRScreen from './pages/QRScreen';
-import ThemesScreen from './pages/ThemesScreen';
-import ReferralScreen from './pages/ReferralScreen';
-import AchievementsScreen from './pages/AchievementsScreen';
-import SavingsScreen from './pages/SavingsScreen';
-import StoriesScreen from './pages/StoriesScreen';
-import PortfolioScreen from './pages/PortfolioScreen';
-import P2PScreen from './pages/P2PScreen';
-import MarketplaceScreen from './pages/MarketplaceScreen';
-import HistoryScreen from './pages/HistoryScreen';
-import TxDetailScreen from './pages/TxDetailScreen';
-import CityScreen from './pages/CityScreen';
-import AuthScreen from './pages/AuthScreen';
-import LinkedAccountsScreen from './pages/LinkedAccountsScreen';
-
-const pages: Record<string, React.ComponentType> = {
-  splash: SplashScreen,
-  onboarding: OnboardingScreen,
-  welcome: WelcomeScreen,
-  home: HomeScreen,
-  cards: CardsScreen,
-  'account-detail': AccountDetailScreen,
-  'open-account': OpenAccountScreen,
-  transfer: TransferScreen,
-  deposit: DepositScreen,
-  receive: ReceiveScreen,
-  swap: SwapScreen,
-  exchange: ExchangeScreen,
-  earn: EarnScreen,
-  escrow: EscrowScreen,
-  news: NewsScreen,
-  chat: ChatScreen,
-  social: SocialScreen,
-  payments: PaymentsScreen,
-  profile: ProfileScreen,
-  subscription: SubscriptionScreen,
-  kyc: KYCScreen,
-  settings: SettingsScreen,
-  notifications: NotificationsScreen,
-  faq: FAQScreen,
-  admin: AdminScreen,
-  'ton-connect': TonConnectScreen,
-  markets: MarketsScreen,
-  qr: QRScreen,
-  themes: ThemesScreen,
-  referral: ReferralScreen,
-  achievements: AchievementsScreen,
-  savings: SavingsScreen,
-  stories: StoriesScreen,
-  portfolio: PortfolioScreen,
-  p2p: P2PScreen,
-  marketplace: MarketplaceScreen,
-  history: HistoryScreen,
-  'tx-detail': TxDetailScreen,
-  city: CityScreen,
-  auth: AuthScreen,
-  'linked-accounts': LinkedAccountsScreen,
-};
-
-const NAV_PAGES = ['home', 'cards', 'portfolio', 'city', 'profile'];
-
-export default function App() {
-  const { page, authed } = useStore();
-
-  useEffect(() => {
-    initTheme();
-    try {
-      const tg = (window as any).Telegram?.WebApp;
-      if (tg) {
-        tg.ready();
-        tg.expand();
-        tg.setHeaderColor('#000000');
-        tg.setBackgroundColor('#000000');
-      }
-    } catch {}
-  }, []);
-
-  const PageComponent = pages[page] || HomeScreen;
-  const showNav = authed && NAV_PAGES.includes(page);
-
-  return (
-    <div className="h-screen w-screen overflow-hidden bg-black text-white" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-      <PageComponent />
-      {showNav && <BottomNav />}
-    </div>
-  );
+type Tab='Home'|'Cards'|'Activity'|'Profile';
+const assets=[['₿','BTC','Bitcoin','0.0842','$5,284.18','#f7931a','+2.4%'],['◆','ETH','Ethereum','1.248','$3,941.22','#8b8bff','+1.8%'],['₮','USDT','Tether','2,400.00','$2,400.00','#26a17b','0.0%'],['T','TON','Toncoin','184.20','$1,220.04','#35aee2','+4.1%']];
+const words=['anchor','apple','autumn','blue','candle','canvas','circle','coffee','crystal','dawn','drift','ember','forest','future','harbor','honest','island','linen','lunar','market','north','orbit'];
+function Icon({children}:{children:React.ReactNode}){return <span className="line-icon">{children}</span>}
+export default function App(){
+ const [tab,setTab]=useState<Tab>('Home'); const [wallet,setWallet]=useState(false); const [importing,setImporting]=useState(false); const [phrase,setPhrase]=useState(''); const [copied,setCopied]=useState(false);
+ const mnemonic=Array.from({length:12},(_,i)=>words[(i*2+3)%words.length]).join(' ');
+ const copy=()=>{navigator.clipboard?.writeText(mnemonic);setCopied(true);setTimeout(()=>setCopied(false),1200)};
+ return <div className="app"><header className="topbar"><div><div className="eyebrow">PERSONAL ACCOUNT <b/> VERIFIED</div><h1>{tab==='Home'?'Good morning, Alex':tab}</h1></div><button className="round">⌁</button></header>
+ {tab==='Home'&&<><section className="hero"><div className="eyebrow">TOTAL BALANCE <span>◉</span></div><strong>$12,845<em>.44</em></strong><div className="meta"><i>↗ $428.16 (3.45%)</i><span>USD · Today</span></div><div className="actions"><button>＋ Add money</button><button>↗ Send</button><button>⇄ Swap</button></div></section><Section title="Your cards" action="View all"><div className="cards"><div className="bank-card"><div><b>luna<span>•</span></b><small>)))</small></div><label>••••　4821</label><footer>VIRTUAL <b>VISA</b></footer></div><button className="new-card">＋<small>New card</small></button></div></Section><Section title="Assets" action="＋ Connect wallet" onAction={()=>setWallet(true)}><div className="asset-box">{assets.map(a=><button className="asset" key={a[1]}><i style={{background:a[5]}}>{a[0]}</i><span><b>{a[1]}</b><small>{a[2]}</small></span><strong>{a[3]}<small>{a[4]}</small></strong><em>{a[6]}</em><label>›</label></button>)}</div></Section><Section title="Recent activity" action="See all"><div className="activity"><div><Icon>↓</Icon><span><b>Card payment</b><small>Today, 14:32 · Starbucks</small></span><strong>− $8.40</strong></div><div><Icon>↑</Icon><span><b>Salary payment</b><small>Yesterday · Incoming</small></span><strong className="green">+ $2,400.00</strong></div></div></Section></>}
+ {tab==='Cards'&&<section className="empty"><div className="bank-card large"><div><b>luna<span>•</span></b><small>)))</small></div><label>••••　4821</label><footer>VIRTUAL <b>VISA</b></footer></div><h2>Your crypto card</h2><p>Spend your digital assets anywhere Visa is accepted.</p><button className="primary">Create new card</button></section>}
+ {tab==='Activity'&&<section className="empty"><h2>All activity</h2><div className="activity"><div><Icon>↓</Icon><span><b>Card payment</b><small>Today, 14:32 · Starbucks</small></span><strong>− $8.40</strong></div><div><Icon>↑</Icon><span><b>Salary payment</b><small>Yesterday · Incoming</small></span><strong className="green">+ $2,400.00</strong></div></div></section>}
+ {tab==='Profile'&&<section className="empty"><div className="avatar">A</div><h2>Alex Morgan</h2><p>Personal account · Verified</p><button className="profile-row">Security <span>›</span></button><button className="profile-row">Preferences <span>›</span></button><button className="profile-row" onClick={()=>setWallet(true)}>Wallet recovery <span>›</span></button></section>}
+ <nav>{(['Home','Cards','Activity','Profile'] as Tab[]).map((t,i)=><button className={tab===t?'active':''} onClick={()=>setTab(t)} key={t}><span>{['⌂','▣','≡','●'][i]}</span>{t}</button>)}</nav>
+ {wallet&&<div className="overlay" onClick={()=>setWallet(false)}><div className="modal" onClick={e=>e.stopPropagation()}><button className="close" onClick={()=>setWallet(false)}>×</button><div className="eyebrow green">NON-CUSTODIAL WALLET</div><h2>{importing?'Restore your wallet':'Your wallet, your keys.'}</h2><p>{importing?'Enter your 12-word recovery phrase to access your assets.':'Create a secure multi-chain wallet for BTC, ETH, TON and USDT.'}</p>{importing?<textarea value={phrase} onChange={e=>setPhrase(e.target.value)} placeholder="word1 word2 word3 ... word12"/>:<div className="phrase">{mnemonic.split(' ').map((w,i)=><span key={i}><small>{i+1}</small>{w}</span>)}</div>}{!importing&&<button className="outline" onClick={copy}>{copied?'Copied':'Copy recovery phrase'}</button>}<button className="primary" disabled={importing&&phrase.trim().split(/\s+/).length!==12} onClick={()=>setWallet(false)}>{importing?'Import wallet':'I saved my phrase'}</button><button className="link" onClick={()=>setImporting(!importing)}>{importing?'Create new wallet':'I already have a wallet →'}</button></div></div>}
+ </div>
 }
+function Section({title,action,children,onAction}:{title:string,action:string,children:React.ReactNode,onAction?:()=>void}){return <section className="section"><div className="section-title"><h2>{title}</h2><button onClick={onAction}>{action}</button></div>{children}</section>}
