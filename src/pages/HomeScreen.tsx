@@ -8,7 +8,7 @@ import AnimatedEmoji from '../components/AnimatedEmoji';
 import {
   SendIcon, DownloadIcon, SwapIcon, DiamondIcon,
   ChartIcon, ShieldIcon, ReceiptIcon, TrendingUpIcon,
-  BellIcon, SearchIcon,
+  BellIcon, SearchIcon, StarIcon, CreditCardIcon, PlusIcon,
 } from '../components/Icons';
 
 export default function HomeScreen() {
@@ -76,41 +76,42 @@ export default function HomeScreen() {
   };
 
   const quickActions = [
-    { Icon: SendIcon, label: 'Перевод', page: 'transfer' as const },
+    { Icon: SendIcon, label: 'Перевести', page: 'transfer' as const },
     { Icon: DownloadIcon, label: 'Пополнить', page: 'deposit' as const },
-    { Icon: SwapIcon, label: 'Обмен', page: 'swap' as const },
-    { Icon: DiamondIcon, label: 'TON', page: 'ton-connect' as const },
+    { Icon: SwapIcon, label: 'Обменять', page: 'swap' as const },
+    { Icon: DiamondIcon, label: 'TON Connect', page: 'ton-connect' as const },
   ];
 
   return (
     <div className="h-full overflow-y-auto pb-24 safe-top">
       {/* ===== Header ===== */}
       <header className="px-5 pt-4 pb-2 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={() => { haptic('light'); go('profile'); }}>
+        <div className="flex items-center gap-3.5">
+          <button onClick={() => { haptic('light'); go('profile'); }} className="relative">
             {user.photo_url ? (
-              <img src={user.photo_url} alt="" className="w-11 h-11 rounded-full ring-1 ring-white/10" />
+              <img src={user.photo_url} alt="" className="w-11 h-11 rounded-full ring-1 ring-white/15" />
             ) : (
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-lg font-bold">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-violet-600 to-pink-600 border border-white/10 flex items-center justify-center text-lg font-bold text-white shadow-lg shadow-violet-500/20">
                 {user.first_name[0]}
               </div>
             )}
+            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-black" />
           </button>
           <div>
-            <p className="text-[11px] text-white/35">{greeting.text} {greeting.emoji}</p>
-            <p className="font-bold text-[15px] -mt-0.5">{user.first_name}</p>
+            <p className="text-[11px] text-white/40 font-medium tracking-wide uppercase">{greeting.text}</p>
+            <p className="font-extrabold text-[16px] tracking-tight text-white">{user.first_name} {user.last_name || ''}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={cycleCurrency}
-            className="glass rounded-full px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5 active:scale-95">
-            {CURRENCIES[dispCurrency]?.flag} {dispCurrency}
+            className="glass rounded-full px-3.5 py-1.5 text-xs font-bold mono flex items-center gap-1.5 active:scale-95 border border-white/10 hover:border-white/20 transition-all">
+            <span className="text-amber-400 font-bold">{dispCurrency}</span>
           </button>
           <button onClick={() => { haptic('light'); go('notifications'); }}
-            className="relative glass rounded-full w-10 h-10 flex items-center justify-center active:scale-95">
-            <AnimatedEmoji type="bell" size={22} />
+            className="relative glass rounded-full w-10 h-10 flex items-center justify-center active:scale-95 border border-white/10 hover:border-white/20 transition-all text-white/80 hover:text-white">
+            <BellIcon size={19} />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-[9px] font-bold ring-2 ring-black">
+              <span className="absolute -top-1 -right-1 w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-[9px] font-extrabold text-white ring-2 ring-black shadow-md shadow-red-500/50">
                 {unreadCount}
               </span>
             )}
@@ -119,23 +120,33 @@ export default function HomeScreen() {
       </header>
 
       {/* ===== Balance Card ===== */}
-      <section className="mx-5 mt-5 glass-accent p-6 rounded-2xl animate-slide-up">
-        <p className="text-xs text-white/40 uppercase tracking-widest mb-1">Общий баланс</p>
-        <p className="text-[42px] font-extrabold mono tracking-tighter leading-none">
+      <section className="mx-5 mt-4 glass p-6 rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-white/[0.02] shadow-2xl animate-slide-up relative overflow-hidden">
+        <div className="absolute -right-10 -top-10 w-40 h-40 bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] text-white/50 uppercase font-semibold tracking-wider">Общий баланс активов</p>
+          <span className="text-[10px] mono px-2 py-0.5 rounded-md bg-white/[0.06] border border-white/10 text-white/70 font-medium">
+            Некастодиально + Банк
+          </span>
+        </div>
+        <p className="text-[40px] font-extrabold mono tracking-tight leading-none mt-2 text-white drop-shadow-sm">
           {formatMoney(totalUsd, dispCurrency)}
         </p>
-        <p className="text-sm text-white/30 mt-2">
-          {accounts.length} {accounts.length === 1 ? 'счёт' : accounts.length < 5 ? 'счёта' : 'счетов'}
-          {walletJettons.length > 0 && ` · ${walletJettons.length} токенов`}
+        <p className="text-xs text-white/40 mt-2 font-medium flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          {accounts.length} {accounts.length === 1 ? 'счёт' : accounts.length < 5 ? 'счёта' : 'счетов'} · {walletJettons.length} токенов в сети TON
         </p>
 
         {/* Quick Actions */}
-        <div className="flex justify-between mt-6 gap-2">
+        <div className="grid grid-cols-4 mt-6 gap-2.5">
           {quickActions.map((action) => (
             <button key={action.label} onClick={() => { haptic('light'); go(action.page); }}
-              className="flex flex-col items-center gap-2 flex-1 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 transition-all">
-              <action.Icon size={22} color="rgba(255,255,255,0.7)" />
-              <span className="text-[11px] text-white/50 font-medium">{action.label}</span>
+              className="flex flex-col items-center gap-2.5 py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] active:scale-95 transition-all border border-white/[0.06] hover:border-white/15">
+              <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-amber-400 shadow-inner">
+                <action.Icon size={19} color="currentColor" />
+              </div>
+              <span className="text-[11px] text-white/70 font-semibold tracking-tight">{action.label}</span>
             </button>
           ))}
         </div>
@@ -144,16 +155,16 @@ export default function HomeScreen() {
       {/* ===== Tokens (horizontal scrollable + editable) ===== */}
       <section className="mt-6">
         <div className="px-5 flex items-center justify-between mb-3">
-          <h3 className="font-bold text-[15px]">Активы</h3>
-          <div className="flex items-center gap-2">
+          <h3 className="font-bold text-[15px] text-white">Активы и счета</h3>
+          <div className="flex items-center gap-3">
             <button onClick={() => { setEditingTokens(!editingTokens); haptic('light'); }}
-              className={`text-xs font-medium active:scale-95 ${editingTokens ? 'text-blue-400' : 'text-white/30'}`}>
-              {editingTokens ? 'Готово' : '✏️ Ред.'}
+              className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-all active:scale-95 ${editingTokens ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-white/40 hover:text-white/70'}`}>
+              {editingTokens ? 'Готово' : 'Настроить'}
             </button>
             {!tonWallet && (
               <button onClick={() => { haptic('light'); go('ton-connect'); }}
-                className="text-xs text-blue-400 font-medium active:scale-95">
-                + Кошелёк
+                className="text-xs text-amber-400 font-bold active:scale-95 flex items-center gap-1 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+                <PlusIcon size={12} /> Подключить
               </button>
             )}
           </div>
@@ -162,56 +173,66 @@ export default function HomeScreen() {
         {allTokens.length === 0 ? (
           <div className="px-5">
             <button onClick={() => { haptic('medium'); go('ton-connect'); }}
-              className="w-full glass p-8 flex flex-col items-center gap-3 rounded-2xl active:scale-[0.98]">
-              <AnimatedEmoji type="diamond" size={40} />
-              <p className="text-sm text-white/40">Подключите кошелёк</p>
+              className="w-full glass p-8 flex flex-col items-center gap-3 rounded-2xl active:scale-[0.98] border border-white/10 hover:border-white/20 transition-all">
+              <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-amber-400">
+                <DiamondIcon size={24} />
+              </div>
+              <p className="text-sm font-semibold text-white/70">Подключите некастодиальный кошелёк</p>
+              <p className="text-xs text-white/40">Для доступа к балансу в блокчейне TON / EVM</p>
             </button>
           </div>
         ) : (
           <div className="flex gap-2.5 overflow-x-auto px-5 pb-2 -mx-0 no-scrollbar">
             {allTokens.map((token, i) => (
-              <div key={token.id} className="glass p-3.5 rounded-2xl min-w-[140px] max-w-[160px] shrink-0 relative animate-slide-up"
+              <div key={token.id} className="glass p-3.5 rounded-2xl min-w-[140px] max-w-[160px] shrink-0 relative animate-slide-up border border-white/[0.08] hover:border-white/15 transition-all"
                 style={{ animationDelay: `${i * 0.04}s` }}>
                 {/* Edit mode — hide button */}
                 {editingTokens && (
                   <button onClick={() => toggleHideToken(token.id)}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white z-10">✕</button>
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white z-10 shadow-md">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
                 )}
 
                 {/* Token icon */}
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2.5">
                   {token.image ? (
-                    <img src={token.image} alt="" className="w-7 h-7 rounded-full" />
+                    <img src={token.image} alt="" className="w-7 h-7 rounded-full border border-white/10" />
                   ) : token.symbol === 'LNC' ? (
-                    <LncIcon size={20} />
+                    <div className="w-7 h-7 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                      <DiamondIcon size={14} />
+                    </div>
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center text-[10px] font-bold mono">
+                    <div className="w-7 h-7 rounded-full bg-white/[0.08] border border-white/10 flex items-center justify-center text-[10px] font-bold mono text-white/80">
                       {token.symbol.slice(0, 3)}
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="text-xs font-bold truncate">{token.symbol}</p>
+                    <p className="text-xs font-bold truncate text-white">{token.symbol}</p>
+                    {token.isAccount && <p className="text-[9px] text-white/35 font-medium">Счёт</p>}
                   </div>
                 </div>
 
                 {/* Balance */}
-                <p className="font-extrabold mono text-sm truncate">
+                <p className="font-extrabold mono text-sm truncate text-white">
                   {token.balance < 0.01 ? token.balance.toFixed(6)
                     : token.balance < 1000 ? token.balance.toFixed(2)
                     : token.balance >= 1e6 ? `${(token.balance / 1e6).toFixed(1)}M`
                     : token.balance.toFixed(0)}
                 </p>
                 {token.usdValue > 0 && (
-                  <p className="text-[10px] text-white/25 mono">${token.usdValue.toFixed(2)}</p>
+                  <p className="text-[10px] text-white/35 mono font-medium mt-0.5">${token.usdValue.toFixed(2)}</p>
                 )}
               </div>
             ))}
 
             {/* Add token */}
             <button onClick={() => { haptic('light'); go('ton-connect'); }}
-              className="glass p-3.5 rounded-2xl min-w-[80px] shrink-0 flex flex-col items-center justify-center gap-1.5 active:scale-95">
-              <span className="text-xl text-white/20">+</span>
-              <span className="text-[9px] text-white/20">Ещё</span>
+              className="glass p-3.5 rounded-2xl min-w-[85px] shrink-0 flex flex-col items-center justify-center gap-2 active:scale-95 border border-white/[0.06] hover:border-white/15 transition-all text-white/40 hover:text-white">
+              <div className="w-7 h-7 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
+                <PlusIcon size={14} />
+              </div>
+              <span className="text-[10px] font-semibold">Добавить</span>
             </button>
           </div>
         )}
@@ -219,23 +240,25 @@ export default function HomeScreen() {
 
       {/* ===== Services ===== */}
       <section className="px-5 mt-6">
-        <h3 className="font-bold text-[15px] mb-3">Сервисы</h3>
-        <div className="grid grid-cols-4 gap-2">
+        <h3 className="font-bold text-[15px] mb-3 text-white">Сервисы экосистемы</h3>
+        <div className="grid grid-cols-4 gap-2.5">
           {([
             { Icon: ChartIcon, label: 'Биржа', page: 'exchange' as const },
             { Icon: ReceiptIcon, label: 'Платежи', page: 'payments' as const },
             { Icon: ShieldIcon, label: 'Гарант', page: 'escrow' as const },
             { Icon: TrendingUpIcon, label: 'P2P', page: 'p2p' as const },
-            { Icon: SwapIcon, label: 'Earn', page: 'earn' as const },
+            { Icon: SwapIcon, label: 'Стейкинг', page: 'earn' as const },
             { Icon: DiamondIcon, label: 'Маркет', page: 'markets' as const },
-            { Icon: SendIcon, label: 'QR', page: 'qr' as const },
+            { Icon: SendIcon, label: 'QR Сканер', page: 'qr' as const },
             { Icon: SearchIcon, label: 'Копилки', page: 'savings' as const },
           ]).map((item, i) => (
             <button key={item.label} onClick={() => { haptic('light'); go(item.page); }}
-              className="glass p-3 flex flex-col items-center gap-1.5 active:scale-95 transition-all rounded-2xl animate-scale-in"
+              className="glass p-3.5 flex flex-col items-center gap-2 active:scale-95 transition-all rounded-2xl border border-white/[0.06] hover:border-white/15 animate-scale-in group"
               style={{ animationDelay: `${i * 0.04}s` }}>
-              <item.Icon size={20} color="rgba(255,255,255,0.5)" />
-              <span className="text-[10px] text-white/40 font-medium">{item.label}</span>
+              <div className="w-8 h-8 rounded-xl bg-white/[0.04] group-hover:bg-amber-500/10 flex items-center justify-center transition-all text-white/60 group-hover:text-amber-400">
+                <item.Icon size={18} color="currentColor" />
+              </div>
+              <span className="text-[10px] text-white/60 font-semibold truncate max-w-full">{item.label}</span>
             </button>
           ))}
         </div>
@@ -245,22 +268,22 @@ export default function HomeScreen() {
       {txs.length > 0 && (
         <section className="px-5 mt-6 mb-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-[15px]">Последние операции</h3>
+            <h3 className="font-bold text-[15px] text-white">Последние операции</h3>
             <button onClick={() => { haptic('light'); go('history'); }}
-              className="text-xs text-white/30 font-medium active:scale-95">Все →</button>
+              className="text-xs text-amber-400 font-semibold active:scale-95 flex items-center gap-1">Все операции →</button>
           </div>
           <div className="space-y-2">
             {txs.slice(0, 5).map((tx) => {
               const isOut = tx.from_user_id === user.telegram_id;
               return (
                 <button key={tx.id} onClick={() => { haptic('light'); useStore.getState().selTx(tx.id); go('tx-detail'); }}
-                  className="w-full glass p-3 flex items-center gap-3 active:scale-[0.98] transition-all text-left rounded-xl">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg ${isOut ? 'bg-red-500/10' : 'bg-emerald-500/10'}`}>
-                    {tx.type === 'transfer' ? '📤' : tx.type === 'deposit' ? '📥' : tx.type === 'subscription' ? '⭐' : '💳'}
+                  className="w-full glass p-3.5 flex items-center gap-3.5 active:scale-[0.98] transition-all text-left rounded-2xl border border-white/[0.06] hover:border-white/15">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${isOut ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
+                    {tx.type === 'transfer' ? <SendIcon size={16} /> : tx.type === 'deposit' ? <DownloadIcon size={16} /> : tx.type === 'subscription' ? <StarIcon size={16} /> : <CreditCardIcon size={16} />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{tx.note || tx.type}</p>
-                    <p className="text-[11px] text-white/30">{new Date(tx.created_at).toLocaleDateString('ru-RU')}</p>
+                    <p className="text-sm font-semibold truncate text-white/90">{tx.note || (tx.type === 'transfer' ? 'Перевод' : tx.type === 'deposit' ? 'Пополнение' : 'Платёж')}</p>
+                    <p className="text-[11px] text-white/40">{new Date(tx.created_at).toLocaleDateString('ru-RU')}</p>
                   </div>
                   <p className={`font-bold mono text-sm ${isOut ? 'text-red-400' : 'text-emerald-400'}`}>
                     {isOut ? '-' : '+'}{formatMoney(balanceInUsd(tx.amount, tx.currency), 'USD')}

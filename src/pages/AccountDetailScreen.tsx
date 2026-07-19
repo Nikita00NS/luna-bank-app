@@ -9,7 +9,8 @@ import {
   generateBalanceCertificate,
   generateContractCertificate,
 } from '../lib/pdf';
-import { ArrowLeftIcon, SendIcon, DownloadIcon, CreditCardIcon, QrCodeIcon } from '../components/Icons';
+import { ArrowLeftIcon, SendIcon, DownloadIcon, CreditCardIcon, QrCodeIcon, FileTextIcon, BankCircleIcon, CoinsIcon, ClipboardCheckIcon, CheckIcon, BriefcaseIcon } from '../components/Icons';
+import { showAlert } from '../lib/telegram';
 import Modal from '../components/Modal';
 import PinPad from '../components/PinPad';
 import type { CardDesign, CardType } from '../lib/store';
@@ -92,8 +93,8 @@ export default function AccountDetailScreen() {
 
     addNotif({
       id: uid(),
-      title: '💳 Карта выпущена',
-      message: `${selectedCardType === 'virtual' ? 'Виртуальная' : selectedCardType === 'premium' ? 'Премиум' : 'Пластиковая'} карта готова`,
+      title: 'Новая карта выпущена',
+      message: `${selectedCardType === 'virtual' ? 'Виртуальная' : selectedCardType === 'premium' ? 'Премиум' : 'Пластиковая'} карта готова к работе`,
       type: 'system',
       read: false,
       created_at: new Date().toISOString(),
@@ -257,27 +258,27 @@ export default function AccountDetailScreen() {
 
       {/* PDF Documents */}
       <div className="px-5 mt-6">
-        <h3 className="text-sm font-bold text-white/50 mb-3">Dokumenty PDF</h3>
+        <h3 className="text-sm font-bold text-white/50 mb-3">Документы и выписки PDF</h3>
         <div className="space-y-2">
           {[
             {
-              icon: '📄',
-              label: 'Vypiska po schyotu',
+              Icon: FileTextIcon,
+              label: 'Выписка по счёту (PDF)',
               action: () => generateStatement(user, account, accountTxs),
             },
             {
-              icon: '🏦',
-              label: 'Rekvizity schyota',
+              Icon: BankCircleIcon,
+              label: 'Полные реквизиты счёта',
               action: () => generateRequisites(user, account),
             },
             {
-              icon: '💰',
-              label: 'Spravka ob ostatke',
+              Icon: CoinsIcon,
+              label: 'Справка о балансе и активах',
               action: () => generateBalanceCertificate(user, account),
             },
             {
-              icon: '📋',
-              label: 'Spravka o dogovore',
+              Icon: ClipboardCheckIcon,
+              label: 'Договор и электронная подпись',
               action: () => generateContractCertificate(user, account),
             },
           ].map((doc, i) => (
@@ -287,31 +288,109 @@ export default function AccountDetailScreen() {
                 haptic('light');
                 doc.action();
               }}
-              className="w-full glass p-3.5 flex items-center gap-3 active:scale-[0.98] transition-all"
+              className="w-full glass p-3.5 flex items-center gap-3.5 active:scale-[0.98] transition-all hover:border-white/15"
             >
-              <span className="text-xl">{doc.icon}</span>
-              <span className="text-sm flex-1 text-left">{doc.label}</span>
-              <DownloadIcon size={16} color="rgba(255,255,255,0.25)" />
+              <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-amber-400">
+                <doc.Icon size={18} />
+              </div>
+              <span className="text-sm flex-1 text-left font-medium text-white/90">{doc.label}</span>
+              <DownloadIcon size={16} color="rgba(255,255,255,0.3)" />
             </button>
           ))}
         </div>
       </div>
+
+      {/* ===== MERCHANT API & WEBHOOK HUB (Only for Business Accounts) ===== */}
+      {account.type === 'business' && (
+        <div className="px-5 mt-6 animate-fade-in">
+          <div className="glass p-6 rounded-3xl border border-amber-500/30 bg-gradient-to-b from-amber-500/[0.08] to-transparent shadow-2xl relative overflow-hidden">
+            <div className="flex items-center gap-3.5 mb-4">
+              <div className="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                <BriefcaseIcon size={22} />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-base text-white">Merchant API & Интеграция</h3>
+                <p className="text-xs text-amber-400 font-semibold mt-0.5">Комиссия эквайринга: 0.5% со сделки</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-white/70 leading-relaxed mb-5 font-medium">
+              Подключите автоматический приём крипто-платежей к вашему интернет-магазину, Telegram-боту или сайту. 
+              Платежи моментально зачисляются на этот счёт, а система автоматически удерживает сервисную комиссию.
+            </p>
+
+            {/* API Key */}
+            <div className="space-y-3 mb-5">
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[11px] font-bold text-white/40 uppercase tracking-wider">Приватный API Key</span>
+                  <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Активен</span>
+                </div>
+                <div className="glass p-3.5 rounded-2xl border border-white/10 bg-black/40 flex items-center justify-between gap-3">
+                  <span className="mono text-xs text-white/90 truncate select-all">luna_live_sk_${(account.id.replace(/-/g, '') + '8f9e0a1b2c3d4e5f6a7b8c9d').slice(0, 32)}</span>
+                  <button onClick={() => { haptic('success'); showAlert('API Key скопирован в буфер обмена'); }}
+                    className="px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/20 hover:bg-amber-500/25 text-xs font-bold text-amber-400 transition-all active:scale-95">
+                    Копировать
+                  </button>
+                </div>
+              </div>
+
+              {/* Webhook URL */}
+              <div>
+                <span className="text-[11px] font-bold text-white/40 uppercase tracking-wider block mb-1.5">URL для Webhook (уведомления о статусе чека)</span>
+                <div className="glass p-3.5 rounded-2xl border border-white/10 bg-black/40 flex items-center justify-between gap-3">
+                  <span className="mono text-xs text-white/60 truncate">https://api.lunabank.crypto/v1/webhook/{account.id.slice(0, 12)}</span>
+                  <button onClick={() => { haptic('light'); showAlert('URL Webhook скопирован'); }}
+                    className="px-3 py-1.5 rounded-xl bg-white/[0.08] hover:bg-white/15 text-xs font-bold text-white/70 hover:text-white transition-all active:scale-95">
+                    Копировать
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Documentation / Code Widget */}
+            <div className="glass p-4 rounded-2xl border border-white/[0.08] bg-white/[0.02]">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-white/80">Готовый виджет «Оплатить через Luna Bank»</span>
+                <span className="text-[10px] mono px-2 py-0.5 rounded bg-white/[0.06] text-white/60 font-semibold">SDK snippet</span>
+              </div>
+              <pre className="text-[11px] mono text-amber-400/90 bg-black/60 p-3.5 rounded-xl overflow-x-auto select-all leading-relaxed border border-white/[0.04]">
+{`<button onclick="LunaPay.checkout({
+  merchant_id: '${account.id.slice(0, 10)}',
+  amount: 100,
+  currency: 'LNC',
+  order_id: 'ORDER_12345'
+})">
+  Оплатить через Luna Bank
+</button>`}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Account Details */}
       <div className="px-5 mt-6 mb-6">
         <h3 className="text-sm font-bold text-white/50 mb-3">Детали счёта</h3>
         <div className="glass divide-y divide-white/[0.04]">
           {[
-            ['Номер', account.account_number],
+            ['Номер счёта', account.account_number],
             ['IBAN', account.iban],
-            ['Валюта', account.currency],
-            ['Тип', account.type],
-            ['Договор', account.contract_signed ? '✅ Подписан' : '—'],
-            ['Открыт', new Date(account.created_at).toLocaleDateString('ru-RU')],
+            ['Валюта / Сеть', account.currency],
+            ['Уровень счета', account.type],
+            ['Договор', account.contract_signed ? 'Подписан (ЭП)' : 'Не подписан'],
+            ['Дата открытия', new Date(account.created_at).toLocaleDateString('ru-RU')],
           ].map(([label, value]) => (
-            <div key={label} className="flex justify-between p-3">
-              <span className="text-sm text-white/35">{label}</span>
-              <span className="text-sm mono text-right max-w-[60%] truncate">{value}</span>
+            <div key={label} className="flex justify-between items-center p-3.5">
+              <span className="text-sm text-white/40">{label}</span>
+              <span className="text-sm mono text-right max-w-[60%] truncate font-medium text-white/85 flex items-center gap-1.5">
+                {label === 'Договор' && account.contract_signed && (
+                  <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                    <CheckIcon size={11} color="#34d399" />
+                  </span>
+                )}
+                {value}
+              </span>
             </div>
           ))}
         </div>

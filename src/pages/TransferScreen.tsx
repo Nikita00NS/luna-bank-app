@@ -10,14 +10,17 @@ import {
   dbUpdateBalance,
   dbCreateNotification,
 } from '../lib/db';
-import { ArrowLeftIcon, SearchIcon, PhoneIcon, GlobeIcon, UserIcon } from '../components/Icons';
-import AnimatedEmoji from '../components/AnimatedEmoji';
+import {
+  ArrowLeftIcon, SearchIcon, PhoneIcon, GlobeIcon, UserIcon,
+  CheckCircleIcon, AlertCircleIcon, DiamondIcon, ShieldCheckIcon,
+  CreditCardIcon, CheckIcon,
+} from '../components/Icons';
 import LncIcon from '../components/LncIcon';
 import { requestContact, formatPhone, normalizePhone, showAlert } from '../lib/telegram';
 import { notifyTransferReceived, notifyTransferSent } from '../lib/bot';
 
 type Step = 'search' | 'amount' | 'confirm' | 'success';
-type SearchTab = 'username' | 'phone' | 'ton';
+type SearchTab = 'phone' | 'ton' | 'username';
 
 interface Recipient {
   telegram_id: number;
@@ -33,7 +36,7 @@ export default function TransferScreen() {
   const { user, accounts, go, addTx, updateBalance, addNotif } = useStore();
 
   const [step, setStep] = useState<Step>('search');
-  const [searchTab, setSearchTab] = useState<SearchTab>('username');
+  const [searchTab, setSearchTab] = useState<SearchTab>('phone');
   const [searchQuery, setSearchQuery] = useState('');
   const [phoneQuery, setPhoneQuery] = useState('');
   const [tonQuery, setTonQuery] = useState('');
@@ -158,8 +161,8 @@ export default function TransferScreen() {
     // Notification
     const notifData = {
       id: uid(),
-      title: '✅ Перевод выполнен',
-      message: `🌙${parsedAmount} → @${recipient.username}`,
+      title: 'Перевод успешно выполнен',
+      message: `${parsedAmount} ${fromAccount?.currency || 'LNC'} → ${recipient.first_name || recipient.luna_id}`,
       type: 'transfer' as const,
       read: false,
       created_at: new Date().toISOString(),
@@ -209,29 +212,29 @@ export default function TransferScreen() {
   const quickAmounts = [50, 100, 500, 1000, 5000];
 
   const tabs: { id: SearchTab; icon: React.ComponentType<any>; label: string }[] = [
-    { id: 'username', icon: UserIcon, label: 'Имя / ID' },
-    { id: 'phone', icon: PhoneIcon, label: 'Телефон' },
-    { id: 'ton', icon: GlobeIcon, label: 'TON' },
+    { id: 'phone', icon: PhoneIcon, label: 'По номеру (СБП)' },
+    { id: 'ton', icon: GlobeIcon, label: 'Крипто-адрес' },
+    { id: 'username', icon: UserIcon, label: 'По Luna ID' },
   ];
 
   return (
     <div className="h-full flex flex-col bg-black safe-top">
       {/* Header */}
-      <div className="px-5 pt-4 pb-2 flex items-center gap-4">
+      <div className="px-5 pt-4 pb-2 flex items-center gap-4 border-b border-white/[0.04]">
         <button
           onClick={() => step === 'search' ? go('home') : setStep('search')}
-          className="text-white/50"
+          className="text-white/60 hover:text-white p-1 -ml-1 transition-colors"
         >
           <ArrowLeftIcon size={20} />
         </button>
-        <h1 className="font-bold flex-1">Перевод</h1>
+        <h1 className="font-extrabold text-[17px] flex-1 text-white tracking-tight">Перевод средств</h1>
       </div>
 
       {/* ===== SEARCH ===== */}
       {step === 'search' && (
-        <div className="flex-1 px-5 mt-2 animate-fade-in overflow-y-auto pb-8">
+        <div className="flex-1 px-5 mt-3 animate-fade-in overflow-y-auto pb-8">
           {/* Tabs */}
-          <div className="flex gap-1.5 mb-4 p-1 glass rounded-2xl">
+          <div className="flex gap-1.5 mb-4 p-1.5 glass rounded-2xl border border-white/[0.08] bg-white/[0.03]">
             {tabs.map((t) => {
               const Icon = t.icon;
               const active = searchTab === t.id;
@@ -239,14 +242,14 @@ export default function TransferScreen() {
                 <button
                   key={t.id}
                   onClick={() => { setSearchTab(t.id); haptic('light'); }}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                     active
-                      ? 'bg-white text-black shadow-lg'
-                      : 'text-white/40 hover:text-white/60'
+                      ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+                      : 'text-white/40 hover:text-white/70'
                   }`}
                 >
-                  <Icon size={14} color={active ? '#000' : 'rgba(255,255,255,0.4)'} />
-                  {t.label}
+                  <Icon size={14} color={active ? '#000' : 'currentColor'} />
+                  <span className="truncate">{t.label}</span>
                 </button>
               );
             })}
@@ -255,31 +258,31 @@ export default function TransferScreen() {
           {/* USERNAME / LUNA ID TAB */}
           {searchTab === 'username' && (
             <>
-              <div className="glass flex items-center px-4 gap-3 rounded-2xl">
-                <SearchIcon size={16} color="rgba(255,255,255,0.3)" />
+              <div className="glass flex items-center px-4 gap-3 rounded-2xl border border-white/[0.08] focus-within:border-amber-500/50 transition-all">
+                <SearchIcon size={16} color="rgba(255,255,255,0.4)" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="@username или Luna ID"
-                  className="flex-1 bg-transparent py-3.5 text-white outline-none text-sm"
+                  placeholder="Внутренний Luna ID или имя пользователя"
+                  className="flex-1 bg-transparent py-3.5 text-white outline-none text-sm font-medium placeholder:text-white/25"
                   autoFocus
                 />
                 {searching && (
-                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white/20 border-t-amber-400 rounded-full animate-spin" />
                 )}
               </div>
 
               {searchQuery.length < 2 && (
                 <div className="text-center py-14">
-                  <div className="w-16 h-16 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
-                    <UserIcon size={28} color="rgba(255,255,255,0.15)" />
+                  <div className="w-16 h-16 rounded-3xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-white/20">
+                    <UserIcon size={28} />
                   </div>
-                  <p className="text-white/30 text-sm">
-                    Введите @username или Luna ID
+                  <p className="text-white/60 text-sm font-semibold">
+                    Укажите уникальный Luna ID
                   </p>
-                  <p className="text-white/15 text-xs mt-1">
-                    Минимум 2 символа
+                  <p className="text-white/30 text-xs mt-1 max-w-[240px] mx-auto">
+                    Мгновенный перевод внутри экосистемы без комиссии сети
                   </p>
                 </div>
               )}
@@ -289,45 +292,45 @@ export default function TransferScreen() {
           {/* PHONE TAB */}
           {searchTab === 'phone' && (
             <>
-              <div className="glass flex items-center px-4 gap-3 rounded-2xl">
-                <PhoneIcon size={16} color="rgba(255,255,255,0.3)" />
+              <div className="glass flex items-center px-4 gap-3 rounded-2xl border border-white/[0.08] focus-within:border-amber-500/50 transition-all">
+                <PhoneIcon size={16} color="rgba(255,255,255,0.4)" />
                 <input
                   type="tel"
                   value={phoneQuery}
                   onChange={(e) => setPhoneQuery(e.target.value)}
-                  placeholder="+7 (999) 123-45-67"
-                  className="flex-1 bg-transparent py-3.5 text-white outline-none text-sm mono"
+                  placeholder="+7 (999) 123-45-67 или международный номер"
+                  className="flex-1 bg-transparent py-3.5 text-white outline-none text-sm mono font-medium placeholder:text-white/25"
                   autoFocus
                 />
                 {searching && (
-                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white/20 border-t-amber-400 rounded-full animate-spin" />
                 )}
               </div>
 
               {/* Request Contact button */}
               <button
                 onClick={handleRequestContact}
-                className="w-full mt-3 glass-accent flex items-center justify-center gap-2.5 py-3.5 rounded-2xl active:scale-[0.98] transition-transform"
+                className="w-full mt-3 glass flex items-center justify-center gap-3 py-3.5 px-4 rounded-2xl active:scale-[0.98] transition-all border border-white/[0.08] hover:border-white/20 bg-gradient-to-b from-white/[0.05] to-transparent group"
               >
-                <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <PhoneIcon size={16} color="#3b82f6" />
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:bg-amber-500/20 transition-all">
+                  <PhoneIcon size={17} color="currentColor" />
                 </div>
-                <div className="text-left">
-                  <p className="text-sm font-semibold">Поделиться контактом</p>
-                  <p className="text-[10px] text-white/30">Telegram запросит разрешение</p>
+                <div className="text-left flex-1">
+                  <p className="text-sm font-bold text-white/90">Выбрать из контактов</p>
+                  <p className="text-[11px] text-white/40">Быстрый поиск по адресной книге устройства</p>
                 </div>
               </button>
 
               {phoneQuery.length < 4 && (
                 <div className="text-center py-10">
-                  <div className="w-16 h-16 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
-                    <PhoneIcon size={28} color="rgba(255,255,255,0.15)" />
+                  <div className="w-16 h-16 rounded-3xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-white/20">
+                    <PhoneIcon size={28} />
                   </div>
-                  <p className="text-white/30 text-sm">
-                    Введите номер телефона
+                  <p className="text-white/60 text-sm font-semibold">
+                    Система Быстрых Переводов (СБП)
                   </p>
-                  <p className="text-white/15 text-xs mt-1">
-                    Или нажмите «Поделиться контактом»
+                  <p className="text-white/30 text-xs mt-1 max-w-[260px] mx-auto leading-relaxed">
+                    Моментальное зачисление по номеру телефона внутри Luna Bank или на внешние банковские карты
                   </p>
                 </div>
               )}
@@ -337,42 +340,48 @@ export default function TransferScreen() {
           {/* TON ADDRESS TAB */}
           {searchTab === 'ton' && (
             <>
-              <div className="glass flex items-center px-4 gap-3 rounded-2xl">
-                <span className="text-lg">💎</span>
+              <div className="glass flex items-center px-4 gap-3 rounded-2xl border border-white/[0.08] focus-within:border-amber-500/50 transition-all">
+                <div className="text-amber-400">
+                  <GlobeIcon size={18} />
+                </div>
                 <input
                   type="text"
                   value={tonQuery}
                   onChange={(e) => setTonQuery(e.target.value)}
-                  placeholder="UQ... или EQ... (TON адрес)"
-                  className="flex-1 bg-transparent py-3.5 text-white outline-none text-xs mono"
+                  placeholder="UQ... / EQ... (TON) или 0x... (EVM адрес)"
+                  className="flex-1 bg-transparent py-3.5 text-white outline-none text-xs mono font-medium placeholder:text-white/25"
                   autoFocus
                 />
               </div>
 
               {tonQuery.length > 0 && (tonQuery.startsWith('UQ') || tonQuery.startsWith('EQ') || tonQuery.startsWith('0:')) && tonQuery.length >= 48 && (
                 <div className="mt-4">
-                  <div className="glass-accent p-4 rounded-2xl">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-lg">
-                        💎
+                  <div className="glass p-5 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent">
+                    <div className="flex items-center gap-3.5 mb-4">
+                      <div className="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                        <DiamondIcon size={20} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">TON Кошелёк</p>
-                        <p className="text-[10px] text-white/25 mono truncate">{tonQuery}</p>
+                        <p className="font-bold text-sm text-white">Ончейн адрес в сети TON</p>
+                        <p className="text-[11px] text-white/40 mono truncate mt-0.5">{tonQuery}</p>
                       </div>
                     </div>
-                    <div className="glass p-3 rounded-xl mb-3">
-                      <p className="text-[10px] text-white/40 mb-1">⚠️ Внимание</p>
-                      <p className="text-[11px] text-white/50">
-                        Перевод на TON-адрес требует подключённый кошелёк и реальные TON. 
-                        Функция в разработке.
-                      </p>
+                    <div className="glass p-3.5 rounded-xl mb-4 border border-amber-500/20 bg-amber-500/[0.04] flex items-start gap-3">
+                      <div className="text-amber-400 mt-0.5 shrink-0">
+                        <AlertCircleIcon size={16} color="currentColor" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-bold text-amber-400/90 mb-0.5">Некастодиальная отправка</p>
+                        <p className="text-[11px] text-white/60 leading-relaxed">
+                          Транзакция будет записана напрямую в блокчейн TON. Проверьте правильность адреса и наличие TON для оплаты комиссии сети (~0.005 TON).
+                        </p>
+                      </div>
                     </div>
                     <button
                       disabled
-                      className="btn-primary w-full opacity-50"
+                      className="btn-primary w-full opacity-50 font-semibold"
                     >
-                      Скоро доступно
+                      Подключить смарт-контракт (в разработке)
                     </button>
                   </div>
                 </div>
@@ -380,14 +389,14 @@ export default function TransferScreen() {
 
               {tonQuery.length === 0 && (
                 <div className="text-center py-10">
-                  <div className="w-16 h-16 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
-                    <GlobeIcon size={28} color="rgba(255,255,255,0.15)" />
+                  <div className="w-16 h-16 rounded-3xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto mb-4 text-white/20">
+                    <GlobeIcon size={28} />
                   </div>
-                  <p className="text-white/30 text-sm">
-                    Введите TON-адрес получателя
+                  <p className="text-white/60 text-sm font-semibold">
+                    Прямой ончейн перевод на крипто-кошелёк
                   </p>
-                  <p className="text-white/15 text-xs mt-1">
-                    Формат UQ... или EQ...
+                  <p className="text-white/30 text-xs mt-1 max-w-[260px] mx-auto leading-relaxed">
+                    Отправка TON, USDT, BTC, ETH по адресу смарт-контракта, домену Ton DNS или ENS
                   </p>
                 </div>
               )}
@@ -401,35 +410,40 @@ export default function TransferScreen() {
                 <button
                   key={r.telegram_id}
                   onClick={() => selectRecipient(r)}
-                  className="w-full glass-accent p-4 flex items-center gap-4 active:scale-[0.98] transition-all rounded-2xl animate-slide-up"
+                  className="w-full glass p-4 flex items-center gap-4 active:scale-[0.98] transition-all rounded-2xl border border-white/[0.08] hover:border-white/20 bg-gradient-to-r from-white/[0.04] to-transparent animate-slide-up"
                   style={{ animationDelay: `${i * 0.05}s` }}
                 >
                   {r.photo_url ? (
                     <img
                       src={r.photo_url}
                       alt=""
-                      className="w-12 h-12 rounded-full"
+                      className="w-12 h-12 rounded-full ring-1 ring-white/10"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xl font-bold">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-600 to-pink-600 border border-white/10 flex items-center justify-center text-lg font-extrabold text-white">
                       {r.first_name?.[0] || '?'}
                     </div>
                   )}
                   <div className="text-left flex-1 min-w-0">
-                    <p className="font-bold truncate">
-                      {r.first_name} {r.last_name}
-                    </p>
-                    <p className="text-xs text-white/35">
-                      @{r.username} · {r.luna_id}
+                    <div className="flex items-center gap-2">
+                      <p className="font-extrabold text-sm truncate text-white">
+                        {r.first_name} {r.last_name || ''}
+                      </p>
+                      <span className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/20 text-amber-400 text-[9px] font-bold mono">
+                        {r.luna_id}
+                      </span>
+                    </div>
+                    <p className="text-xs text-white/40 mt-0.5 font-medium">
+                      {r.username ? `@${r.username}` : `Участник экосистемы`}
                     </p>
                     {searchTab === 'phone' && r.phone_number && (
-                      <p className="text-[10px] text-white/20 mono mt-0.5">
-                        📱 {formatPhone(r.phone_number)}
+                      <p className="text-[11px] text-white/50 mono mt-1 font-semibold flex items-center gap-1.5">
+                        <PhoneIcon size={12} color="rgba(255,255,255,0.4)" /> {formatPhone(r.phone_number)}
                       </p>
                     )}
                   </div>
-                  <div className="text-white/15">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <div className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center text-white/40">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="9 18 15 12 9 6" />
                     </svg>
                   </div>
@@ -444,14 +458,16 @@ export default function TransferScreen() {
             (searchTab === 'phone' && phoneQuery.length >= 4)
           ) && searchResults.length === 0 && !searching && (
             <div className="text-center py-10">
-              <p className="text-3xl mb-2">🔍</p>
-              <p className="text-white/30 text-sm">
-                Пользователь не найден
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto mb-3 text-white/30">
+                <SearchIcon size={24} />
+              </div>
+              <p className="text-white/60 font-bold text-sm">
+                Пользователь или счёт не найден
               </p>
-              <p className="text-white/20 text-xs mt-1">
+              <p className="text-white/30 text-xs mt-1 max-w-[240px] mx-auto">
                 {searchTab === 'phone'
-                  ? 'Номер не привязан к аккаунту Luna Bank'
-                  : 'Попробуйте другой @username или Luna ID'}
+                  ? 'Указанный номер не зарегистрирован в системе быстрых переводов Luna Bank'
+                  : 'Проверьте правильность написания Luna ID'}
               </p>
             </div>
           )}
@@ -462,61 +478,62 @@ export default function TransferScreen() {
       {step === 'amount' && recipient && (
         <div className="flex-1 px-5 mt-4 overflow-y-auto animate-fade-in pb-8">
           {/* Recipient card */}
-          <div className="glass p-4 flex items-center gap-3 mb-5 rounded-2xl">
+          <div className="glass p-4 flex items-center gap-3.5 mb-5 rounded-2xl border border-white/10 bg-gradient-to-r from-white/[0.05] to-transparent">
             {recipient.photo_url ? (
-              <img src={recipient.photo_url} alt="" className="w-12 h-12 rounded-full" />
+              <img src={recipient.photo_url} alt="" className="w-12 h-12 rounded-full ring-1 ring-white/15" />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-lg font-bold">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 border border-white/10 flex items-center justify-center text-lg font-extrabold text-black">
                 {recipient.first_name?.[0] || '?'}
               </div>
             )}
-            <div className="flex-1">
-              <p className="font-bold">
-                {recipient.first_name} {recipient.last_name}
+            <div className="flex-1 min-w-0">
+              <p className="font-extrabold text-sm text-white truncate">
+                {recipient.first_name} {recipient.last_name || ''}
               </p>
-              <p className="text-xs text-white/30">
-                @{recipient.username}
+              <p className="text-xs text-white/40 mono mt-0.5">
+                ID: {recipient.luna_id || recipient.username}
               </p>
             </div>
             <button
               onClick={() => { setStep('search'); setRecipient(null); }}
-              className="text-[11px] text-white/25 underline"
+              className="text-[11px] text-amber-400 hover:text-amber-300 font-semibold px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 transition-all"
             >
               Изменить
             </button>
           </div>
 
           {/* From account */}
-          <p className="text-xs text-white/35 mb-2 font-medium">Со счёта</p>
-          <div className="space-y-1.5 mb-5">
+          <p className="text-xs text-white/40 mb-2 font-bold uppercase tracking-wider">Списать с актива / счёта</p>
+          <div className="space-y-2 mb-5">
             {accounts.map((acc) => (
               <button
                 key={acc.id}
                 onClick={() => setFromAccountId(acc.id)}
                 className={`
-                  w-full rounded-xl p-3 flex items-center gap-3 transition-all
+                  w-full rounded-2xl p-3.5 flex items-center gap-3 transition-all border
                   ${
                     fromAccountId === acc.id
-                      ? 'bg-white/[0.08] ring-1 ring-white/15'
-                      : 'bg-white/[0.03]'
+                      ? 'bg-amber-500/10 border-amber-500/40 shadow-lg shadow-amber-500/5'
+                      : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06]'
                   }
                 `}
               >
+                <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-amber-400">
+                  <CreditCardIcon size={18} />
+                </div>
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-medium">{acc.name}</p>
-                  <p className="text-[11px] text-white/30">
+                  <p className="text-sm font-bold text-white">{acc.name}</p>
+                  <p className="text-[11px] text-white/40 mono mt-0.5">
                     {formatMoney(
                       balanceInUsd(acc.balance, acc.currency),
                       'USD'
                     )}{' '}
-                    · 🌙{acc.balance.toFixed(2)}
+                    · {acc.balance.toFixed(2)} {acc.currency}
                   </p>
                 </div>
                 {fromAccountId === acc.id && (
-                  <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
+                  <div className="w-6 h-6 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-md">
+                    <CheckIcon size={14} color="#000" />
                   </div>
                 )}
               </button>
@@ -524,15 +541,20 @@ export default function TransferScreen() {
           </div>
 
           {/* Amount input */}
-          <p className="text-xs text-white/35 mb-2 font-medium">Сумма</p>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
-            className="w-full glass px-4 py-4 bg-transparent text-white text-3xl font-extrabold mono outline-none text-center mb-3 rounded-2xl"
-            autoFocus
-          />
+          <p className="text-xs text-white/40 mb-2 font-bold uppercase tracking-wider">Сумма перевода</p>
+          <div className="glass p-5 rounded-3xl border border-white/10 mb-4 bg-gradient-to-b from-white/[0.05] to-transparent">
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+              className="w-full bg-transparent text-white text-4xl font-extrabold mono outline-none text-center placeholder:text-white/15 tracking-tight"
+              autoFocus
+            />
+            <p className="text-center text-xs text-amber-400/80 font-semibold mt-2">
+              {fromAccount ? `Доступно: ${fromAccount.balance.toFixed(2)} ${fromAccount.currency}` : ''}
+            </p>
+          </div>
 
           {/* Quick amounts */}
           <div className="flex flex-wrap gap-2 mb-5">
@@ -540,11 +562,11 @@ export default function TransferScreen() {
               <button
                 key={a}
                 onClick={() => { setAmount(String(a)); haptic('light'); }}
-                className={`glass rounded-lg px-3 py-1.5 text-xs mono active:scale-95 transition-transform ${
-                  amount === String(a) ? 'ring-1 ring-white/20 bg-white/[0.06]' : ''
+                className={`glass rounded-xl px-3.5 py-2 text-xs mono font-bold active:scale-95 transition-all border ${
+                  amount === String(a) ? 'border-amber-500/50 bg-amber-500/20 text-amber-400' : 'border-white/10 text-white/70 hover:text-white'
                 }`}
               >
-                <LncIcon size={12} />{a}
+                {a} LNC
               </button>
             ))}
           </div>
@@ -554,34 +576,34 @@ export default function TransferScreen() {
             type="text"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="💬 Сообщение (необязательно)"
-            className="w-full glass px-4 py-3 bg-transparent text-white text-sm outline-none mb-4 rounded-xl"
+            placeholder="Комментарий к платежу (необязательно)"
+            className="w-full glass px-4 py-3.5 bg-transparent text-white text-sm outline-none mb-5 rounded-2xl border border-white/[0.08] focus:border-amber-500/50 placeholder:text-white/25"
           />
 
           {/* Commission info */}
           {parsedAmount > 0 && (
-            <div className="glass p-4 mb-5 space-y-2 rounded-2xl">
+            <div className="glass p-4.5 mb-6 space-y-2.5 rounded-2xl border border-white/10 bg-white/[0.02]">
               <div className="flex justify-between text-sm">
-                <span className="text-white/35">Сумма</span>
-                <span className="mono">🌙{parsedAmount.toFixed(2)}</span>
+                <span className="text-white/40 font-medium">Сумма перевода</span>
+                <span className="mono font-semibold text-white">{parsedAmount.toFixed(2)} {fromAccount?.currency || 'LNC'}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-white/35">
-                  Комиссия (
+                <span className="text-white/40 font-medium">
+                  Комиссия сети / СБП (
                   {SUBSCRIPTION_PLANS.find((p) => p.id === user.subscription)?.commission}%)
                 </span>
-                <span className="mono text-white/50">🌙{commission.toFixed(2)}</span>
+                <span className="mono text-emerald-400 font-semibold">{commission === 0 ? 'Бесплатно' : `${commission.toFixed(2)} ${fromAccount?.currency}`}</span>
               </div>
-              <div className="h-px bg-white/[0.06]" />
-              <div className="flex justify-between text-sm font-bold">
+              <div className="h-px bg-white/[0.08]" />
+              <div className="flex justify-between text-sm font-extrabold text-white">
                 <span>Итого к списанию</span>
-                <span className="mono">🌙{total.toFixed(2)}</span>
+                <span className="mono text-amber-400">{total.toFixed(2)} {fromAccount?.currency || 'LNC'}</span>
               </div>
               {fromAccount && (
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-white/20">Остаток после перевода</span>
-                  <span className="mono text-white/25">
-                    🌙{Math.max(0, fromAccount.balance - total).toFixed(2)}
+                <div className="flex justify-between text-xs pt-1">
+                  <span className="text-white/30">Остаток после перевода</span>
+                  <span className="mono text-white/50">
+                    {Math.max(0, fromAccount.balance - total).toFixed(2)} {fromAccount.currency}
                   </span>
                 </div>
               )}
@@ -591,9 +613,9 @@ export default function TransferScreen() {
           <button
             onClick={() => { haptic('medium'); setStep('confirm'); }}
             disabled={!canTransfer}
-            className="btn-primary w-full"
+            className="btn-primary w-full py-4 rounded-2xl font-bold text-[15px] shadow-lg shadow-amber-500/20 disabled:opacity-30 disabled:shadow-none"
           >
-            Продолжить →
+            Продолжить подтверждение →
           </button>
         </div>
       )}
@@ -601,41 +623,44 @@ export default function TransferScreen() {
       {/* ===== CONFIRM ===== */}
       {step === 'confirm' && recipient && fromAccount && (
         <div className="flex-1 px-5 mt-4 animate-fade-in overflow-y-auto pb-8">
-          <div className="glass p-5 space-y-3 mb-6 rounded-2xl">
-            <div className="text-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-2xl font-bold mx-auto mb-3">
+          <div className="glass p-6 space-y-4 mb-6 rounded-3xl border border-white/15 bg-gradient-to-b from-white/[0.07] to-white/[0.02] shadow-2xl relative overflow-hidden">
+            <div className="absolute -right-12 -top-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-amber-500 to-orange-600 border border-white/20 flex items-center justify-center text-2xl font-extrabold text-black mx-auto mb-3 shadow-lg shadow-amber-500/20">
                 {recipient.first_name?.[0] || '?'}
               </div>
-              <h3 className="font-bold text-lg">Подтверждение перевода</h3>
+              <h3 className="font-extrabold text-lg text-white">Платёжное поручение</h3>
+              <p className="text-xs text-white/40 mt-0.5">Пожалуйста, проверьте реквизиты перед отправкой</p>
             </div>
 
             {[
-              ['👤 Получатель', `${recipient.first_name} ${recipient.last_name}`],
-              ['📎 Username', `@${recipient.username}`],
-              ['💳 Со счёта', fromAccount.name],
-              ['💰 Сумма', `🌙${parsedAmount.toFixed(2)}`],
-              ['📊 Комиссия', `🌙${commission.toFixed(2)}`],
-              ...(note ? [['💬 Сообщение', note]] : []),
-              ['📋 Итого', `🌙${total.toFixed(2)}`],
-            ].map(([label, value]) => (
+              ['Получатель', `${recipient.first_name} ${recipient.last_name || ''}`],
+              ['Идентификатор', `${recipient.luna_id || recipient.username || recipient.phone_number || 'Участник'}`],
+              ['Списать со счёта', fromAccount.name],
+              ['Сумма перевода', `${parsedAmount.toFixed(2)} ${fromAccount.currency}`],
+              ['Комиссия СБП / Сети', `${commission === 0 ? '0.00 (0%)' : commission.toFixed(2)} ${fromAccount.currency}`],
+              ...(note ? [['Комментарий', note]] : []),
+              ['Итоговая сумма', `${total.toFixed(2)} ${fromAccount.currency}`],
+            ].map(([label, value], idx) => (
               <div
                 key={label}
-                className="flex justify-between py-2 border-b border-white/[0.04] last:border-0 last:font-bold"
+                className={`flex justify-between py-2.5 border-b border-white/[0.06] last:border-0 ${idx === 6 ? 'font-extrabold text-white pt-3 text-base' : 'text-sm'}`}
               >
-                <span className="text-white/35 text-sm">{label}</span>
-                <span className="text-sm mono text-right max-w-[55%] truncate">{value}</span>
+                <span className="text-white/40 font-medium">{label}</span>
+                <span className="mono text-right max-w-[55%] truncate font-semibold text-white/90">{value}</span>
               </div>
             ))}
           </div>
 
-          <button onClick={executeTransfer} className="btn-primary w-full">
-            ✅ Подтвердить перевод
+          <button onClick={executeTransfer} className="btn-primary w-full py-4 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 shadow-xl shadow-amber-500/25">
+            <CheckCircleIcon size={18} /> Подтвердить и отправить
           </button>
           <button
             onClick={() => setStep('amount')}
-            className="btn-ghost w-full mt-2"
+            className="btn-ghost w-full mt-3 py-3 rounded-2xl font-semibold text-white/60 hover:text-white"
           >
-            ← Изменить
+            ← Изменить данные
           </button>
         </div>
       )}
@@ -644,23 +669,23 @@ export default function TransferScreen() {
       {step === 'success' && recipient && (
         <div className="flex-1 flex flex-col items-center justify-center px-5 animate-fade-in">
           <div className="relative mb-8">
-            <div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center">
-              <AnimatedEmoji type="success" size={72} loop={false} />
+            <div className="w-24 h-24 rounded-3xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shadow-2xl shadow-emerald-500/20">
+              <CheckCircleIcon size={56} />
             </div>
-            <div className="absolute inset-0 w-24 h-24 rounded-full bg-emerald-500/10 animate-pulse-ring" />
+            <div className="absolute inset-0 w-24 h-24 rounded-3xl bg-emerald-500/10 animate-pulse-ring" />
           </div>
 
-          <h2 className="text-2xl font-extrabold mb-2">Перевод выполнен!</h2>
-          <p className="text-white/40 text-sm mb-1">
-            🌙{parsedAmount.toFixed(2)} → @{recipient.username}
+          <h2 className="text-2xl font-extrabold mb-2 text-white">Перевод успешно выполнен!</h2>
+          <p className="text-emerald-400 font-bold mono text-lg mb-1">
+            -{parsedAmount.toFixed(2)} {fromAccount?.currency || 'LNC'} → {recipient.first_name}
           </p>
-          <p className="text-white/25 text-xs mb-1">
-            {recipient.first_name} {recipient.last_name}
+          <p className="text-white/40 text-xs mb-1">
+            Идентификатор: {recipient.luna_id || recipient.username || formatPhone(recipient.phone_number || '')}
           </p>
-          <p className="text-[10px] text-white/15 mono mb-8">TX: {txId}</p>
+          <p className="text-[10px] text-white/20 mono mb-8 bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/5">Транзакция: {txId}</p>
 
-          <button onClick={() => go('home')} className="btn-primary w-full max-w-sm">
-            На главную
+          <button onClick={() => go('home')} className="btn-primary w-full max-w-sm py-4 rounded-2xl font-bold">
+            Вернуться на главную
           </button>
           <button
             onClick={() => {
@@ -673,9 +698,9 @@ export default function TransferScreen() {
               setTonQuery('');
               setSearchResults([]);
             }}
-            className="btn-ghost w-full max-w-sm mt-2"
+            className="btn-ghost w-full max-w-sm mt-3 py-3.5 rounded-2xl font-semibold border border-white/10 hover:border-white/20"
           >
-            📤 Ещё перевод
+            Сделать ещё один перевод
           </button>
         </div>
       )}

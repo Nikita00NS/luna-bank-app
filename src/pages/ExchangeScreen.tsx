@@ -3,9 +3,7 @@ import { useStore, uid } from '../lib/store';
 import { haptic } from '../lib/utils';
 import { CRYPTO_PRICES } from '../lib/constants';
 import { dbUpdateBalance, dbCreateTransaction } from '../lib/db';
-import { ArrowLeftIcon, ChartIcon, TrendingUpIcon } from '../components/Icons';
-import AnimatedEmoji from '../components/AnimatedEmoji';
-import LncIcon from '../components/LncIcon';
+import { ArrowLeftIcon, ChartIcon, TrendingUpIcon, CheckCircleIcon, CoinsIcon, DiamondIcon } from '../components/Icons';
 
 const COINS = [
   { sym: 'TON', name: 'Toncoin', price: CRYPTO_PRICES.TON, change: 5.2 },
@@ -116,25 +114,25 @@ export default function ExchangeScreen() {
 
   return (
     <div className="h-full flex flex-col bg-black safe-top">
-      <div className="px-5 pt-4 pb-2 flex items-center gap-4">
+      <div className="px-5 pt-4 pb-2 flex items-center gap-4 border-b border-white/[0.04]">
         <button onClick={() => {
           if (tradeStep !== 'form') { setTradeStep('form'); return; }
           go('home');
-        }} className="text-white/50"><ArrowLeftIcon size={20} /></button>
-        <h1 className="font-bold flex-1">Биржа Pro</h1>
+        }} className="text-white/60 hover:text-white transition-colors p-1 -ml-1"><ArrowLeftIcon size={20} /></button>
+        <h1 className="font-extrabold text-[17px] flex-1 text-white tracking-tight">Биржа Pro</h1>
       </div>
 
       {tradeStep === 'form' && (
         <>
-          <div className="px-5 flex gap-2 mb-3">
+          <div className="px-5 mt-3 flex gap-1.5 p-1.5 glass rounded-2xl border border-white/[0.08] bg-white/[0.03]">
             {(['market', 'trade', 'orders'] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${tab === t ? 'bg-white text-black' : 'glass text-white/50'}`}>
-                {t === 'market' ? '📈 Рынок' : t === 'trade' ? '💹 Торговля' : `📋 (${orders.length})`}
+              <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${tab === t ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'text-white/40 hover:text-white/70'}`}>
+                {t === 'market' ? 'Котировки' : t === 'trade' ? 'Торговля' : `Ордера (${orders.length})`}
               </button>
             ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto px-5 pb-24">
+          <div className="flex-1 overflow-y-auto px-5 pb-24 mt-4">
             {tab === 'market' && (
               <div className="space-y-2.5 animate-fade-in">
                 {COINS.map((coin, i) => {
@@ -144,14 +142,14 @@ export default function ExchangeScreen() {
                   const pts = data.map((v, j) => `${(j / (data.length - 1)) * 100},${30 - ((v - min) / range) * 25}`).join(' ');
                   return (
                     <button key={coin.sym} onClick={() => { setSelCoin(coin); setTab('trade'); haptic('light'); }}
-                      className="w-full glass p-4 flex items-center gap-4 animate-slide-up active:scale-[0.98] transition-all rounded-2xl"
+                      className="w-full glass p-4 flex items-center gap-4 animate-slide-up active:scale-[0.98] transition-all rounded-2xl border border-white/10 hover:border-white/20 bg-gradient-to-r from-white/[0.04] to-transparent"
                       style={{ animationDelay: `${i * 0.05}s` }}>
-                      <div className="w-10 h-10 rounded-full bg-white/[0.04] flex items-center justify-center text-sm font-bold mono">{coin.sym.slice(0, 3)}</div>
-                      <div className="flex-1 text-left"><p className="font-bold text-sm">{coin.name}</p><p className="text-[11px] text-white/30">{coin.sym}/LNC</p></div>
-                      <svg width="100" height="30" className="opacity-50"><polyline fill="none" stroke={pos ? '#34d399' : '#f87171'} strokeWidth="1.5" points={pts} /></svg>
+                      <div className="w-11 h-11 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-sm font-extrabold mono text-amber-400 shrink-0">{coin.sym.slice(0, 3)}</div>
+                      <div className="flex-1 text-left"><p className="font-extrabold text-sm text-white">{coin.name}</p><p className="text-[11px] text-white/40 font-medium">{coin.sym}/LNC</p></div>
+                      <svg width="100" height="30" className="opacity-70"><polyline fill="none" stroke={pos ? '#34d399' : '#f87171'} strokeWidth="2" points={pts} /></svg>
                       <div className="text-right ml-2">
-                        <p className="font-bold mono text-sm">${coin.price >= 1 ? coin.price.toLocaleString('en-US', { minimumFractionDigits: 2 }) : coin.price.toFixed(4)}</p>
-                        <p className={`text-[11px] mono ${pos ? 'text-emerald-400' : 'text-red-400'}`}>{pos ? '+' : ''}{coin.change}%</p>
+                        <p className="font-extrabold mono text-sm text-white">${coin.price >= 1 ? coin.price.toLocaleString('en-US', { minimumFractionDigits: 2 }) : coin.price.toFixed(4)}</p>
+                        <p className={`text-[11px] mono font-bold ${pos ? 'text-emerald-400' : 'text-red-400'}`}>{pos ? '+' : ''}{coin.change}%</p>
                       </div>
                     </button>
                   );
@@ -162,34 +160,38 @@ export default function ExchangeScreen() {
             {tab === 'trade' && (
               <div className="animate-fade-in">
                 {!selCoin ? (
-                  <div className="text-center py-16"><p className="text-white/35">Выберите монету на вкладке «Рынок»</p></div>
+                  <div className="text-center py-16"><p className="text-white/35">Выберите монету на вкладке «Котировки»</p></div>
                 ) : (
                   <>
-                    <div className="glass-accent p-4 mb-4 rounded-2xl">
-                      <p className="font-extrabold text-lg">{selCoin.name} <span className="text-white/30 text-sm">{selCoin.sym}/LNC</span></p>
-                      <p className="text-3xl font-extrabold mono mt-1">${selCoin.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                    <div className="glass p-5 mb-5 rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent">
+                      <div className="flex justify-between items-center">
+                        <p className="font-extrabold text-lg text-white">{selCoin.name} <span className="text-white/40 text-sm mono">{selCoin.sym}/LNC</span></p>
+                        <span className="px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold mono">Спот</span>
+                      </div>
+                      <p className="text-3xl font-extrabold mono mt-2 text-white">${selCoin.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                     </div>
 
-                    <div className="flex gap-2 mb-4">
-                      <button onClick={() => setSide('buy')} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${side === 'buy' ? 'bg-emerald-500 text-white' : 'glass text-white/50'}`}>📈 Купить</button>
-                      <button onClick={() => setSide('sell')} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${side === 'sell' ? 'bg-red-500 text-white' : 'glass text-white/50'}`}>📉 Продать</button>
+                    <div className="flex gap-2.5 mb-5 p-1.5 glass rounded-2xl border border-white/10">
+                      <button onClick={() => setSide('buy')} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${side === 'buy' ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'text-white/50 hover:text-white'}`}>Купить {selCoin.sym}</button>
+                      <button onClick={() => setSide('sell')} className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${side === 'sell' ? 'bg-red-500 text-black shadow-lg shadow-red-500/20' : 'text-white/50 hover:text-white'}`}>Продать {selCoin.sym}</button>
                     </div>
 
-                    <div className="glass p-3 mb-3 rounded-xl">
-                      <p className="text-xs text-white/35 mb-2">Количество {selCoin.sym}</p>
+                    <div className="glass p-4 mb-4 rounded-2xl border border-white/10">
+                      <p className="text-xs text-white/40 font-bold uppercase tracking-wider mb-2">Количество {selCoin.sym}</p>
                       <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"
-                        className="w-full bg-transparent text-2xl font-extrabold mono outline-none text-white" />
+                        className="w-full bg-transparent text-3xl font-extrabold mono outline-none text-white text-center" />
                     </div>
 
                     {val > 0 && (
-                      <div className="glass p-3 mb-4 space-y-2 rounded-xl">
+                      <div className="glass p-4 mb-5 space-y-2.5 rounded-2xl border border-white/10 bg-white/[0.02]">
                         <div className="flex justify-between text-sm">
-                          <span className="text-white/35">Курс</span>
-                          <span className="mono">1 {selCoin.sym} = 🌙{(price / lncPrice).toFixed(2)} LNC</span>
+                          <span className="text-white/40 font-medium">Текущий курс</span>
+                          <span className="mono font-semibold text-white">1 {selCoin.sym} = {(price / lncPrice).toFixed(2)} LNC</span>
                         </div>
-                        <div className="flex justify-between text-sm font-bold">
-                          <span className="text-white/50">{side === 'buy' ? 'К оплате' : 'Получите'}</span>
-                          <span className="mono">🌙{totalLNC.toFixed(2)} LNC</span>
+                        <div className="h-px bg-white/[0.08]" />
+                        <div className="flex justify-between text-sm font-extrabold text-white">
+                          <span>{side === 'buy' ? 'К списанию' : 'Получите на баланс'}</span>
+                          <span className="mono text-amber-400">{totalLNC.toFixed(2)} LNC</span>
                         </div>
                       </div>
                     )}
@@ -197,11 +199,11 @@ export default function ExchangeScreen() {
                     <button
                       onClick={goToConfirm}
                       disabled={!canExecute}
-                      className={`w-full py-4 rounded-2xl font-bold text-base transition-all active:scale-[0.97] ${
-                        side === 'buy' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
-                      } disabled:opacity-30`}
+                      className={`w-full py-4 rounded-2xl font-bold text-base transition-all active:scale-[0.97] shadow-lg ${
+                        side === 'buy' ? 'bg-emerald-500 text-black shadow-emerald-500/20' : 'bg-red-500 text-black shadow-red-500/20'
+                      } disabled:opacity-30 disabled:shadow-none`}
                     >
-                      Продолжить →
+                      Перейти к подтверждению ордера →
                     </button>
                   </>
                 )}
@@ -211,15 +213,15 @@ export default function ExchangeScreen() {
             {tab === 'orders' && (
               <div className="animate-fade-in">
                 {orders.length === 0 ? (
-                  <div className="text-center py-16"><p className="text-white/35">Нет ордеров</p></div>
+                  <div className="text-center py-16"><p className="text-white/40 font-bold text-sm">История ордеров пуста</p></div>
                 ) : (
-                  <div className="space-y-2">{orders.map((o, i) => (
-                    <div key={o.id} className="glass p-3 flex items-center gap-3 animate-slide-up rounded-xl" style={{ animationDelay: `${i * 0.05}s` }}>
-                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold ${o.side === 'buy' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
-                        {o.side === 'buy' ? '↑' : '↓'}
+                  <div className="space-y-2.5">{orders.map((o, i) => (
+                    <div key={o.id} className="glass p-3.5 flex items-center gap-3.5 animate-slide-up rounded-2xl border border-white/10" style={{ animationDelay: `${i * 0.05}s` }}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold border ${o.side === 'buy' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                        <TrendingUpIcon size={18} />
                       </div>
-                      <div className="flex-1"><p className="font-bold text-sm">{o.side === 'buy' ? 'Покупка' : 'Продажа'} {o.coin}</p><p className="text-[11px] text-white/25">{new Date(o.time).toLocaleString('ru-RU')}</p></div>
-                      <div className="text-right"><p className="font-bold mono text-sm">{o.amount.toFixed(4)} {o.coin}</p><p className="text-[11px] text-white/25 mono">🌙{o.total.toFixed(2)}</p></div>
+                      <div className="flex-1 min-w-0"><p className="font-bold text-sm text-white">{o.side === 'buy' ? 'Покупка' : 'Продажа'} {o.coin}</p><p className="text-[11px] text-white/40 mt-0.5 font-medium">{new Date(o.time).toLocaleString('ru-RU')}</p></div>
+                      <div className="text-right"><p className="font-extrabold mono text-sm text-white">{o.amount.toFixed(4)} {o.coin}</p><p className="text-[11px] text-amber-400 font-semibold mono">{o.total.toFixed(2)} LNC</p></div>
                     </div>
                   ))}</div>
                 )}
@@ -232,59 +234,63 @@ export default function ExchangeScreen() {
       {/* ===== CONFIRM STEP ===== */}
       {tradeStep === 'confirm' && selCoin && (
         <div className="flex-1 px-5 mt-4 animate-fade-in overflow-y-auto pb-8">
-          <div className="glass p-5 space-y-3 rounded-2xl mb-6">
-            <div className="text-center mb-3">
-              <AnimatedEmoji type="coin" size={48} />
-              <h3 className="font-bold text-lg mt-2">Подтверждение ордера</h3>
+          <div className="glass p-6 space-y-4 rounded-3xl mb-6 border border-white/15 bg-gradient-to-b from-white/[0.07] to-white/[0.02] shadow-2xl">
+            <div className="text-center mb-4">
+              <div className="w-16 h-16 rounded-3xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-3">
+                <CoinsIcon size={32} />
+              </div>
+              <h3 className="font-extrabold text-lg text-white">Подтверждение биржевого ордера</h3>
             </div>
 
             {[
-              ['📊 Операция', side === 'buy' ? 'Покупка' : 'Продажа'],
-              ['💰 Монета', `${selCoin.name} (${selCoin.sym})`],
-              ['📈 Курс', `$${selCoin.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}`],
-              ['🔢 Количество', `${val.toFixed(4)} ${selCoin.sym}`],
-              ['💎 Стоимость', `≈ $${(val * price).toFixed(2)}`],
-              [side === 'buy' ? '🔻 Списать' : '🔺 Получить', `🌙${totalLNC.toFixed(2)} LNC`],
-            ].map(([label, value]) => (
-              <div key={label} className="flex justify-between py-2 border-b border-white/[0.04] last:border-0 last:font-bold">
-                <span className="text-white/35 text-sm">{label}</span>
-                <span className="text-sm mono">{value}</span>
+              ['Тип операции', side === 'buy' ? 'Покупка (Спот)' : 'Продажа (Спот)'],
+              ['Торговая пара', `${selCoin.name} (${selCoin.sym})`],
+              ['Курс исполнения', `$${selCoin.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}`],
+              ['Объём ордера', `${val.toFixed(4)} ${selCoin.sym}`],
+              ['Оценочная стоимость в USD', `≈ $${(val * price).toFixed(2)}`],
+              [side === 'buy' ? 'Списать с баланса' : 'Зачислить на баланс', `${totalLNC.toFixed(2)} LNC`],
+            ].map(([label, value], idx) => (
+              <div key={label} className={`flex justify-between py-2 border-b border-white/[0.06] last:border-0 ${idx === 5 ? 'font-extrabold text-white pt-3 text-base' : 'text-sm'}`}>
+                <span className="text-white/40 font-medium shrink-0">{label}</span>
+                <span className="mono text-right font-semibold text-white/90 truncate max-w-[55%]">{value}</span>
               </div>
             ))}
           </div>
 
           <button
             onClick={execute}
-            className={`w-full py-4 rounded-2xl font-bold text-base transition-all active:scale-[0.97] ${
-              side === 'buy' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
+            className={`w-full py-4 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 transition-all active:scale-[0.97] shadow-xl ${
+              side === 'buy' ? 'bg-emerald-500 text-black shadow-emerald-500/25' : 'bg-red-500 text-black shadow-red-500/25'
             }`}
           >
-            ✅ {side === 'buy' ? 'Подтвердить покупку' : 'Подтвердить продажу'}
+            <CheckCircleIcon size={18} /> {side === 'buy' ? 'Разместить ордер на покупку' : 'Разместить ордер на продажу'}
           </button>
-          <button onClick={() => setTradeStep('form')} className="btn-ghost w-full mt-2">
-            ← Изменить
+          <button onClick={() => setTradeStep('form')} className="btn-ghost w-full mt-3 py-3 rounded-2xl font-semibold text-white/60 hover:text-white">
+            ← Вернуться и изменить параметры
           </button>
         </div>
       )}
 
       {/* ===== SUCCESS STEP ===== */}
       {tradeStep === 'success' && selCoin && (
-        <div className="flex-1 flex flex-col items-center justify-center px-5 animate-fade-in">
-          <AnimatedEmoji type="success" size={72} loop={false} />
-          <h2 className="text-2xl font-extrabold mt-4 mb-2">Ордер выполнен!</h2>
-          <p className="text-white/40 text-sm mb-1">
+        <div className="flex-1 flex flex-col items-center justify-center px-5 animate-fade-in text-center">
+          <div className="w-24 h-24 rounded-3xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-2xl shadow-emerald-500/20 mb-6">
+            <CheckCircleIcon size={56} />
+          </div>
+          <h2 className="text-2xl font-extrabold mt-2 mb-2 text-white">Ордер успешно выполнен!</h2>
+          <p className="text-emerald-400 font-bold text-lg mono mb-1">
             {side === 'buy' ? 'Куплено' : 'Продано'} {val.toFixed(4)} {selCoin.sym}
           </p>
-          <p className="text-white/25 text-xs mb-1">
-            за 🌙{totalLNC.toFixed(2)} LNC
+          <p className="text-white/40 text-xs mb-1">
+            Сумма сделки: {totalLNC.toFixed(2)} LNC
           </p>
-          <p className="text-[10px] text-white/15 mono mb-8">ID: {lastOrderId}</p>
+          <p className="text-[10px] text-white/20 mono mb-8 bg-white/[0.03] px-3 py-1.5 rounded-lg border border-white/5">ID ордера: {lastOrderId}</p>
 
-          <button onClick={resetTrade} className="btn-primary w-full max-w-sm">
-            На биржу
+          <button onClick={resetTrade} className="btn-primary w-full max-w-sm py-4 rounded-2xl font-bold mb-3">
+            Новая торговая операция
           </button>
-          <button onClick={() => go('home')} className="btn-ghost w-full max-w-sm mt-2">
-            На главную
+          <button onClick={() => go('home')} className="btn-ghost w-full max-w-sm py-3.5 rounded-2xl font-semibold border border-white/10 hover:border-white/20">
+            Вернуться на главную
           </button>
         </div>
       )}
