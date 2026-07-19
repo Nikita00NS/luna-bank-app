@@ -4,7 +4,6 @@ import { getGreeting, hashPin, haptic } from '../lib/utils';
 import { syncFromDB } from '../lib/db';
 import PinPad from '../components/PinPad';
 import Logo from '../components/Logo';
-import AnimatedEmoji from '../components/AnimatedEmoji';
 import {
   authenticateBiometrics,
   hasStoredCredential,
@@ -128,41 +127,40 @@ export default function WelcomeScreen() {
   // ===== Welcome Screen =====
   return (
     <div
-      className={`
-        h-full flex flex-col cursor-pointer safe-top
-        bg-gradient-to-b ${greeting.gradient} to-black
-      `}
+      className="h-full flex flex-col cursor-pointer safe-top bg-gradient-to-b from-amber-500/10 via-black to-black relative overflow-hidden"
       onClick={handleTap}
     >
+      {/* Background ambient glow */}
+      <div className="absolute top-10 right-10 w-48 h-48 bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
+
       {/* Header */}
-      <div className="px-6 pt-6 flex items-center gap-3 animate-fade-in">
-        <Logo size={40} />
-        <span className="font-black text-lg tracking-tight">Luna Bank</span>
-        <AnimatedEmoji type="moon" size={24} />
+      <div className="px-6 pt-6 flex items-center gap-3 animate-fade-in relative z-10">
+        <Logo size={40} glow />
+        <span className="font-black text-lg tracking-tight text-white">Luna Bank</span>
       </div>
 
       {/* Center */}
-      <div className="flex-1 flex flex-col items-center justify-center px-8">
-        <div className="animate-slide-up">
+      <div className="flex-1 flex flex-col items-center justify-center px-8 relative z-10">
+        <div className="animate-slide-up text-center">
           {/* Avatar */}
           {user.photo_url ? (
             <img
               src={user.photo_url}
               alt=""
-              className="w-28 h-28 rounded-full mb-6 mx-auto ring-2 ring-white/10 shadow-2xl"
+              className="w-28 h-28 rounded-3xl mb-6 mx-auto ring-1 ring-white/15 shadow-2xl"
             />
           ) : (
-            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-5xl font-bold mb-6 mx-auto shadow-2xl">
+            <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-violet-600 to-pink-600 border border-white/10 flex items-center justify-center text-5xl font-black mb-6 mx-auto shadow-2xl shadow-violet-500/20 text-white">
               {user.first_name[0]}
             </div>
           )}
 
           {/* Greeting */}
-          <h1 className="text-2xl font-bold text-center mb-1 text-white/60">
-            {greeting.text},
-          </h1>
-          <h2 className="text-4xl font-extrabold text-center">
-            {user.first_name}! {greeting.emoji}
+          <p className="text-sm font-bold uppercase tracking-widest text-amber-400 mb-1">
+            {greeting.text}
+          </p>
+          <h2 className="text-3xl font-black text-white tracking-tight">
+            {user.first_name} {user.last_name || ''}
           </h2>
         </div>
       </div>
@@ -173,8 +171,8 @@ export default function WelcomeScreen() {
         style={{ animationDelay: '0.4s' }}
       >
         {bioAuthenticating ? (
-          <div className="glass inline-flex items-center gap-3 px-6 py-3 text-white/40 text-sm">
-            <AnimatedEmoji type="loading" size={18} />
+          <div className="glass inline-flex items-center gap-3 px-6 py-3 text-white/70 text-sm font-medium rounded-2xl border border-white/10">
+            <div className="w-4 h-4 border-2 border-white/20 border-t-amber-400 rounded-full animate-spin" />
             Подтвердите биометрию...
           </div>
         ) : bioFailed ? (
