@@ -3,7 +3,7 @@ import { useStore, uid } from '../lib/store';
 import { haptic } from '../lib/utils';
 import { CRYPTO_PRICES } from '../lib/constants';
 import { dbUpdateBalance, dbCreateTransaction } from '../lib/db';
-import { ArrowLeftIcon, SwapIcon } from '../components/Icons';
+import { ArrowLeftIcon, SwapIcon, AlertCircleIcon } from '../components/Icons';
 
 function getRate(from: string, to: string): number {
   // Special handling for LNC to ensure $0.05 rate
@@ -71,7 +71,7 @@ export default function SwapScreen() {
       }).catch(() => {});
 
       addNotif({
-        id: uid(), title: '💱 Обмен выполнен',
+        id: uid(), title: 'Конвертация валют выполнена',
         message: `${val} ${fromCur} → ${received.toFixed(6)} ${toCur}`,
         type: 'system', read: false, created_at: new Date().toISOString(),
       });
@@ -154,10 +154,13 @@ export default function SwapScreen() {
           </div>
 
           {!fromAcc && (
-            <div className="glass p-3 mt-3 border border-amber-500/20 flex items-center gap-2">
-              <span>⚠️</span>
-              <p className="text-xs text-amber-400">Нет счёта в {fromCur}.
-                <button onClick={() => go('open-account')} className="underline ml-1">Открыть</button>
+            <div className="glass p-3.5 mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/[0.04] flex items-center gap-2.5">
+              <div className="text-amber-400 shrink-0">
+                <AlertCircleIcon size={18} />
+              </div>
+              <p className="text-xs text-amber-300 font-semibold leading-relaxed">
+                У вас нет открытого счёта в {fromCur}.
+                <button onClick={() => go('open-account')} className="underline font-bold ml-1 text-white hover:text-amber-400">Открыть счёт</button>
               </p>
             </div>
           )}

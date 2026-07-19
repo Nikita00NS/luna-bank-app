@@ -3,6 +3,7 @@ import { useStore, uid, genAccNum, genIBAN } from '../lib/store';
 import { ACCOUNT_TYPES, LNC_RATE_USD } from '../lib/constants';
 import { haptic } from '../lib/utils';
 import { dbCreateAccount, dbCreateNotification } from '../lib/db';
+import { ArrowLeftIcon, UserIcon, BriefcaseIcon, DiamondIcon, CoinsIcon, GlobeIcon, ClipboardCheckIcon, CheckIcon } from '../components/Icons';
 import SignaturePad from '../components/SignaturePad';
 import type { AccountType, Currency } from '../lib/store';
 
@@ -87,8 +88,8 @@ export default function OpenAccountScreen() {
     // Notification
     const notifData = {
       id: uid(),
-      title: '✅ Счёт открыт',
-      message: `${selectedType.name} (${selectedType.currency}) — договор подписан`,
+      title: 'Новый счёт успешно открыт',
+      message: `${selectedType.name} (${selectedType.currency}) — договор подписан электронной подписью`,
       type: 'system' as const,
       read: false,
       created_at: new Date().toISOString(),
@@ -167,23 +168,23 @@ export default function OpenAccountScreen() {
                 onClick={() => handleSelectType(type)}
                 className="
                   w-full glass p-4 flex items-center gap-4 text-left
-                  active:scale-[0.98] transition-all duration-200
+                  active:scale-[0.98] transition-all duration-200 border border-white/10 hover:border-white/20
                 "
               >
-                <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center text-2xl">
-                  {type.icon}
+                <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-amber-400">
+                  {type.id === 'business' ? <BriefcaseIcon size={24} /> : type.id === 'ton' ? <DiamondIcon size={24} /> : type.id === 'usdt' ? <CoinsIcon size={24} /> : type.id === 'bitcoin' || type.id === 'ethereum' ? <GlobeIcon size={24} /> : <UserIcon size={24} />}
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold">{type.name}</p>
-                  <p className="text-xs text-white/30 mt-0.5">{type.desc}</p>
-                  <p className="text-[11px] text-white/20 mt-0.5">
-                    Валюта: {type.currency}
+                  <p className="font-extrabold text-sm text-white">{type.name}</p>
+                  <p className="text-xs text-white/40 mt-0.5 font-medium">{type.desc}</p>
+                  <p className="text-[11px] text-white/30 mt-0.5 mono font-semibold">
+                    Валюта счёта: {type.currency}
                     {type.currency === 'LNC' ? ` (1 LNC = $${LNC_RATE_USD})` : ''}
                   </p>
                 </div>
                 {type.requiresWallet && (
-                  <span className="text-[10px] text-white/25 bg-white/[0.04] px-2 py-1 rounded-lg">
-                    🔗 TON
+                  <span className="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl font-bold flex items-center gap-1">
+                    <GlobeIcon size={11} /> Ончейн TON
                   </span>
                 )}
               </button>
@@ -349,17 +350,17 @@ export default function OpenAccountScreen() {
           >
             <div
               className={`
-                w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all
-                ${agreed ? 'bg-white border-white' : 'border-white/20'}
+                w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0
+                ${agreed ? 'bg-amber-500 border-amber-500 text-black shadow-md' : 'border-white/20'}
               `}
               onClick={() => setAgreed(!agreed)}
             >
               {agreed && (
-                <span className="text-black text-xs font-bold">✓</span>
+                <CheckIcon size={13} color="#000" />
               )}
             </div>
-            <span className="text-[13px]">
-              Я ознакомился и принимаю условия договора
+            <span className="text-xs text-white/80 font-medium">
+              Я подтверждаю согласие с условиями банковского обслуживания и использования Merchant API
             </span>
           </label>
 
@@ -370,9 +371,9 @@ export default function OpenAccountScreen() {
               setShowSignature(true);
             }}
             disabled={!agreed}
-            className="btn-primary w-full flex items-center justify-center gap-2"
+            className="btn-primary w-full py-4 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 disabled:opacity-30"
           >
-            ✍️ Подписать договор
+            <ClipboardCheckIcon size={18} /> Подписать договор (Электронная подпись ЭП)
           </button>
         </div>
       )}
